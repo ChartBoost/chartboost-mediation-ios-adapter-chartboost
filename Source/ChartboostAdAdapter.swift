@@ -64,7 +64,7 @@ final class ChartboostAdAdapter: NSObject, PartnerLogger, PartnerErrorFactory {
             chartboostAd.cache(bidResponse: bidResponse)
         } else {
             // Programmatic load missing the bid_response setting
-            let error = error(.noBidPayload(placement: request.heliumPlacement))
+            let error = error(.noBidPayload(request))
             log(.loadFailed(request, error: error))
             completion(.failure(error))
         }
@@ -83,7 +83,7 @@ extension ChartboostAdAdapter: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
     func didCacheAd(_ event: CHBCacheEvent, error partnerError: CHBCacheError?) {
         // Report load finished
         if let partnerError = partnerError {
-            let error = error(.loadFailure(placement: request.heliumPlacement), error: partnerError)
+            let error = error(.loadFailure(request), error: partnerError)
             log(.loadFailed(request, error: error))
             loadCompletion?(.failure(error))
         } else {
@@ -100,7 +100,7 @@ extension ChartboostAdAdapter: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
     func didShowAd(_ event: CHBShowEvent, error partnerError: CHBShowError?) {
         // Report show finished
         if let partnerError = partnerError {
-            let error = error(.showFailure(placement: request.heliumPlacement), error: partnerError)
+            let error = error(.showFailure(partnerAd), error: partnerError)
             log(.showFailed(partnerAd, error: error))
             showCompletion?(.failure(error))
         } else {

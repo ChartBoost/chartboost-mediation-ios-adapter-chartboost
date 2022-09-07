@@ -64,7 +64,7 @@ final class ChartboostAdapter: PartnerAdapter {
         log(.invalidateStarted(partnerAd))
         if ads[partnerAd.request.identifier] == nil {
             // Fail if no ad to invalidate
-            let error = error(.noAdToInvalidate(placement: partnerAd.request.heliumPlacement))
+            let error = error(.noAdToInvalidate(partnerAd))
             log(.invalidateFailed(partnerAd, error: error))
             completion(.failure(error))
         } else {
@@ -79,7 +79,7 @@ final class ChartboostAdapter: PartnerAdapter {
         log(.showStarted(partnerAd))
         // Fail if no ad available
         guard let ad = ads[partnerAd.request.identifier] else {
-            let error = error(.noAdReadyToShow(placement: partnerAd.request.heliumPlacement))
+            let error = error(.noAdReadyToShow(partnerAd))
             log(.showFailed(partnerAd, error: error))
             completion(.failure(error))
             return
