@@ -94,10 +94,10 @@ extension ChartboostAdAdapter: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
         if let partnerError = partnerError {
             let error = error(.loadFailure(request), error: partnerError)
             log(.loadFailed(request, error: error))
-            loadCompletion?(.failure(error))
+            loadCompletion?(.failure(error)) ?? log(.loadIgnored)
         } else {
             log(.loadSucceeded(partnerAd))
-            loadCompletion?(.success(partnerAd))
+            loadCompletion?(.success(partnerAd)) ?? log(.loadIgnored)
         }
         loadCompletion = nil
     }
@@ -111,10 +111,10 @@ extension ChartboostAdAdapter: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
         if let partnerError = partnerError {
             let error = error(.showFailure(partnerAd), error: partnerError)
             log(.showFailed(partnerAd, error: error))
-            showCompletion?(.failure(error))
+            showCompletion?(.failure(error)) ?? log(.showIgnored)
         } else {
             log(.showSucceeded(partnerAd))
-            showCompletion?(.success(partnerAd))
+            showCompletion?(.success(partnerAd)) ?? log(.showIgnored)
         }
         showCompletion = nil
     }
@@ -122,26 +122,26 @@ extension ChartboostAdAdapter: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
     func didClickAd(_ event: CHBClickEvent, error: CHBClickError?) {
         // Report click
         log(.didClick(partnerAd, error: error))
-        partnerAdDelegate?.didClick(partnerAd)
+        partnerAdDelegate?.didClick(partnerAd) ?? log(.delegateUnavailable)
     }
     
     func didRecordImpression(_ event: CHBImpressionEvent) {
         // Report impression tracked
         log(.didTrackImpression(partnerAd))
-        partnerAdDelegate?.didTrackImpression(partnerAd)
+        partnerAdDelegate?.didTrackImpression(partnerAd) ?? log(.delegateUnavailable)
     }
     
     func didDismissAd(_ event: CHBDismissEvent) {
         // Report dismiss
         log(.didDismiss(partnerAd, error: nil))
-        partnerAdDelegate?.didDismiss(partnerAd, error: nil)
+        partnerAdDelegate?.didDismiss(partnerAd, error: nil) ?? log(.delegateUnavailable)
     }
     
     func didEarnReward(_ event: CHBRewardEvent) {
         // Report reward
         let reward = Reward(amount: event.reward, label: nil)
         log(.didReward(partnerAd, reward: reward))
-        partnerAdDelegate?.didReward(partnerAd, reward: reward)
+        partnerAdDelegate?.didReward(partnerAd, reward: reward) ?? log(.delegateUnavailable)
     }
     
     func didFinishHandlingClick(_ event: CHBClickEvent, error: CHBClickError?) {
