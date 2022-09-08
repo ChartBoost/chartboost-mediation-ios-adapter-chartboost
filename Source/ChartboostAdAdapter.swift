@@ -11,18 +11,25 @@ import ChartboostSDK
 
 /// Helium Chartboost adapter ad wrapper.
 final class ChartboostAdAdapter: NSObject, PartnerLogger, PartnerErrorFactory {
+    
     /// The main adapter instance.
     let adapter: PartnerAdapter
+    
     /// The load request that originated this ad.
     let request: AdLoadRequest
+    
     /// The partner ad delegate to send ad life-cycle events to.
     weak var partnerAdDelegate: PartnerAdDelegate?
+    
     /// The Chartboost SDK ad.
     private let chartboostAd: CHBAd
+    
     /// The partner ad model passed in PartnerAdDelegate callbacks.
     private lazy var partnerAd = PartnerAd(ad: chartboostAd, details: [:], request: request)
+    
     /// The completion for the ongoing load operation.
     private var loadCompletion: ((Result<PartnerAd, Error>) -> Void)?
+    
     /// The completion for the ongoing show operation.
     private var showCompletion: ((Result<PartnerAd, Error>) -> Void)?
     

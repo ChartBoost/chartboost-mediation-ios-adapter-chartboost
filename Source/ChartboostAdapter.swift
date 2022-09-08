@@ -14,8 +14,10 @@ final class ChartboostAdapter: PartnerAdapter {
     
     /// The last value set on `setGDPRApplies(_:)`.
     private var gdprApplies = false
+    
     /// The last value set on `setGDPRConsentStatus(_:)`.
     private var gdprStatus: GDPRConsentStatus = .unknown
+    
     /// Ad adapters created on load, keyed by request identifier.
     private var adAdapters: [String: ChartboostAdAdapter] = [:]
     
