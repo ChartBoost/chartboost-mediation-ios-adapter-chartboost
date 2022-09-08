@@ -55,7 +55,9 @@ final class ChartboostAdAdapter: NSObject, PartnerLogger, PartnerErrorFactory {
             }
             // Banners show on load
             loadCompletion = { [weak chartboostAd] result in
-                chartboostAd?.show(from: viewController)
+                if case .success = result {
+                    chartboostAd?.show(from: viewController)
+                }
                 completion(result)
             }
         } else {
