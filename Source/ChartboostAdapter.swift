@@ -78,14 +78,14 @@ final class ChartboostAdapter: PartnerAdapter {
     func show(_ partnerAd: PartnerAd, viewController: UIViewController, completion: @escaping (Result<PartnerAd, Error>) -> Void) {
         log(.showStarted(partnerAd))
         // Fail if no ad adapter available
-        guard let ad = adAdapters[partnerAd.request.identifier] else {
+        guard let adAdapter = adAdapters[partnerAd.request.identifier] else {
             let error = error(.noAdReadyToShow(partnerAd))
             log(.showFailed(partnerAd, error: error))
             completion(.failure(error))
             return
         }
         // Show the ad
-        ad.show(with: viewController, completion: completion)
+        adAdapter.show(with: viewController, completion: completion)
     }
     
     func fetchBidderInformation(request: PreBidRequest, completion: @escaping ([String : String]) -> Void) {
