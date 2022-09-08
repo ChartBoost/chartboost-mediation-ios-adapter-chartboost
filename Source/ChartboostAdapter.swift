@@ -51,6 +51,13 @@ final class ChartboostAdapter: PartnerAdapter {
         }
     }
     
+    func fetchBidderInformation(request: PreBidRequest, completion: @escaping ([String : String]) -> Void) {
+        // Chartboost does not currently provide any bidding token
+        log(.fetchBidderInfoStarted(request))
+        log(.fetchBidderInfoSucceeded(request))
+        completion([:])
+    }
+    
     func load(request: AdLoadRequest, partnerAdDelegate: PartnerAdDelegate, viewController: UIViewController?, completion: @escaping (Result<PartnerAd, Error>) -> Void) {
         log(.loadStarted(request))
         // Running on main queue is required for banner creation since it's an UIView
@@ -88,13 +95,6 @@ final class ChartboostAdapter: PartnerAdapter {
         }
         // Show the ad
         adAdapter.show(with: viewController, completion: completion)
-    }
-    
-    func fetchBidderInformation(request: PreBidRequest, completion: @escaping ([String : String]) -> Void) {
-        // Chartboost does not currently provide any bidding token
-        log(.fetchBidderInfoStarted(request))
-        log(.fetchBidderInfoSucceeded(request))
-        completion([:])
     }
     
     func setGDPRApplies(_ applies: Bool) {
