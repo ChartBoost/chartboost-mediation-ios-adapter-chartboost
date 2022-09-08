@@ -17,7 +17,7 @@ final class ChartboostAdapter: PartnerAdapter {
     /// The last value set on `setGDPRConsentStatus(_:)`.
     private var gdprStatus: GDPRConsentStatus = .unknown
     /// Ad adapters created on load, keyed by request identifier.
-    private var ads: [String: ChartboostAdAdapter] = [:]
+    private var adAdapters: [String: ChartboostAdAdapter] = [:]
     
     let partnerSDKVersion = Chartboost.getSDKVersion()
     
@@ -55,21 +55,21 @@ final class ChartboostAdapter: PartnerAdapter {
         DispatchQueue.main.async { [self] in
             // Create ad adapter, save it and start loading
             let adAdapter = ChartboostAdAdapter(adapter: self, request: request, partnerAdDelegate: partnerAdDelegate)
-            ads[request.identifier] = adAdapter
+            adAdapters[request.identifier] = adAdapter
             adAdapter.load(with: viewController, completion: completion)
         }
     }
     
     func invalidate(_ partnerAd: PartnerAd, completion: @escaping (Result<PartnerAd, Error>) -> Void) {
         log(.invalidateStarted(partnerAd))
-        if ads[partnerAd.request.identifier] == nil {
+        if adAdapters[partnerAd.request.identifier] == nil {
             // Fail if no ad to invalidate
             let error = error(.noAdToInvalidate(partnerAd))
             log(.invalidateFailed(partnerAd, error: error))
             completion(.failure(error))
         } else {
             // Succeed if we had an ad
-            ads[partnerAd.request.identifier] = nil
+            adAdapters[partnerAd.request.identifier] = nil
             log(.invalidateSucceeded(partnerAd))
             completion(.success(partnerAd))
         }
@@ -77,8 +77,8 @@ final class ChartboostAdapter: PartnerAdapter {
     
     func show(_ partnerAd: PartnerAd, viewController: UIViewController, completion: @escaping (Result<PartnerAd, Error>) -> Void) {
         log(.showStarted(partnerAd))
-        // Fail if no ad available
-        guard let ad = ads[partnerAd.request.identifier] else {
+        // Fail if no ad adapter available
+        guard let ad = adAdapters[partnerAd.request.identifier] else {
             let error = error(.noAdReadyToShow(partnerAd))
             log(.showFailed(partnerAd, error: error))
             completion(.failure(error))
