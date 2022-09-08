@@ -30,8 +30,8 @@ final class ChartboostAdapter: PartnerAdapter {
     func setUp(with configuration: PartnerConfiguration, completion: @escaping (Error?) -> Void) {
         log(.setUpStarted)
         // Get credentials, fail early if they are unavailable
-        guard let appID = configuration.credentials["app_id"], let appSignature = configuration.credentials["app_signature"] else {
-            let error = error(.missingSetUpParameter(key: configuration.credentials["app_id"] == nil ? "app_id" : "app_signature"))
+        guard let appID = configuration.appID, let appSignature = configuration.appSignature else {
+            let error = error(.missingSetUpParameter(key: configuration.appID == nil ? .appIDKey : .appSignatureKey))
             log(.setUpFailed(error))
             completion(error)
             return
@@ -128,4 +128,17 @@ final class ChartboostAdapter: PartnerAdapter {
         // Set Chartboost COPPA consent
         Chartboost.addDataUseConsent(.COPPA(isChildDirected: isSubject))
     }
+}
+
+/// Convenience extension to access Chartboost credentials from the configuration.
+private extension PartnerConfiguration {
+    var appID: String? { credentials[.appIDKey] }
+    var appSignature: String? { credentials[.appSignatureKey] }
+}
+
+private extension String {
+    /// Chartboost app ID credentials key
+    static let appIDKey = "app_id"
+    /// Chartboost app signature credentials key
+    static let appSignatureKey = "app_signature"
 }
