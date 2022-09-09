@@ -94,10 +94,10 @@ extension ChartboostAdAdapter: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
         if let partnerError = partnerError {
             let error = error(.loadFailure(request), error: partnerError)
             log(.loadFailed(request, error: error))
-            loadCompletion?(.failure(error)) ?? log(.loadIgnored)
+            loadCompletion?(.failure(error)) ?? log(.loadResultIgnored)
         } else {
             log(.loadSucceeded(partnerAd))
-            loadCompletion?(.success(partnerAd)) ?? log(.loadIgnored)
+            loadCompletion?(.success(partnerAd)) ?? log(.loadResultIgnored)
         }
         loadCompletion = nil
     }
@@ -111,10 +111,10 @@ extension ChartboostAdAdapter: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
         if let partnerError = partnerError {
             let error = error(.showFailure(partnerAd), error: partnerError)
             log(.showFailed(partnerAd, error: error))
-            showCompletion?(.failure(error)) ?? log(.showIgnored)
+            showCompletion?(.failure(error)) ?? log(.showResultIgnored)
         } else {
             log(.showSucceeded(partnerAd))
-            showCompletion?(.success(partnerAd)) ?? log(.showIgnored)
+            showCompletion?(.success(partnerAd)) ?? log(.showResultIgnored)
         }
         showCompletion = nil
     }
