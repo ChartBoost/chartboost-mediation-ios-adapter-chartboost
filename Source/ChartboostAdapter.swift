@@ -58,7 +58,7 @@ final class ChartboostAdapter: PartnerAdapter {
         completion([:])
     }
     
-    func load(request: AdLoadRequest, partnerAdDelegate: PartnerAdDelegate, viewController: UIViewController?, completion: @escaping (Result<PartnerAd, Error>) -> Void) {
+    func load(request: PartnerAdLoadRequest, partnerAdDelegate: PartnerAdDelegate, viewController: UIViewController?, completion: @escaping (Result<PartnerAd, Error>) -> Void) {
         log(.loadStarted(request))
         // Running on main queue is required for banner creation since it's an UIView
         DispatchQueue.main.async { [self] in
@@ -134,8 +134,8 @@ final class ChartboostAdapter: PartnerAdapter {
 
 /// Convenience extension to access Chartboost credentials from the configuration.
 private extension PartnerConfiguration {
-    var appID: String? { credentials[.appIDKey] }
-    var appSignature: String? { credentials[.appSignatureKey] }
+    var appID: String? { credentials[.appIDKey] as? String }
+    var appSignature: String? { credentials[.appSignatureKey] as? String }
 }
 
 private extension String {
