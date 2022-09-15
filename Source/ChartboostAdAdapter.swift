@@ -16,7 +16,7 @@ final class ChartboostAdAdapter: NSObject, PartnerLogger, PartnerErrorFactory {
     let adapter: PartnerAdapter
     
     /// The load request that originated this ad.
-    let request: AdLoadRequest
+    let request: PartnerAdLoadRequest
     
     /// The partner ad delegate to send ad life-cycle events to.
     weak var partnerAdDelegate: PartnerAdDelegate?
@@ -33,7 +33,7 @@ final class ChartboostAdAdapter: NSObject, PartnerLogger, PartnerErrorFactory {
     /// The completion for the ongoing show operation.
     private var showCompletion: ((Result<PartnerAd, Error>) -> Void)?
     
-    init(adapter: PartnerAdapter, request: AdLoadRequest, partnerAdDelegate: PartnerAdDelegate) {
+    init(adapter: PartnerAdapter, request: PartnerAdLoadRequest, partnerAdDelegate: PartnerAdDelegate) {
         self.request = request
         self.partnerAdDelegate = partnerAdDelegate
         self.adapter = adapter
@@ -151,7 +151,7 @@ extension ChartboostAdAdapter: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
 
 private extension ChartboostAdAdapter {
     
-    static func makeChartboostAd(request: AdLoadRequest, adapter: PartnerAdapter) -> CHBAd {
+    static func makeChartboostAd(request: PartnerAdLoadRequest, adapter: PartnerAdapter) -> CHBAd {
         let mediation = CHBMediation(
             name: "Helium",
             libraryVersion: Helium.sdkVersion,
