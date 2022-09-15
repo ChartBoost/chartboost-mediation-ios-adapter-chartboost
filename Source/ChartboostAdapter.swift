@@ -134,8 +134,8 @@ final class ChartboostAdapter: PartnerAdapter {
 
 /// Convenience extension to access Chartboost credentials from the configuration.
 private extension PartnerConfiguration {
-    var appID: String? { credentials[.appIDKey] }
-    var appSignature: String? { credentials[.appSignatureKey] }
+    var appID: String? { credentials[.appIDKey] as? String }
+    var appSignature: String? { credentials[.appSignatureKey] as? String }
 }
 
 private extension String {
