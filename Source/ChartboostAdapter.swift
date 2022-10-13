@@ -100,9 +100,12 @@ final class ChartboostAdapter: PartnerAdapter {
     private func updateGDPRConsent() {
         // Set Chartboost GDPR consent using both gdprApplies and gdprStatus
         if gdprApplies {
-            Chartboost.addDataUseConsent(.GDPR(gdprStatus == .granted ? .behavioral : .nonBehavioral))
+            let consent = CHBDataUseConsent.GDPR(gdprStatus == .granted ? .behavioral : .nonBehavioral)
+            Chartboost.addDataUseConsent(consent)
+            log(.privacyUpdated(setting: consent.privacyStandard.rawValue, value: consent.consent.rawValue))
         } else {
             Chartboost.clearDataUseConsent(for: .GDPR)
+            log(.privacyUpdated(setting: CHBPrivacyStandard.GDPR.rawValue, value: nil))
         }
     }
     
@@ -111,9 +114,15 @@ final class ChartboostAdapter: PartnerAdapter {
     /// - parameter privacyString: A IAB-compliant string indicating the CCPA status.
     func setCCPAConsent(hasGivenConsent: Bool, privacyString: String?) {
         // Set Chartboost CCPA consent
-        Chartboost.addDataUseConsent(.CCPA(hasGivenConsent ? .optInSale : .optOutSale))
+        let consent = CHBDataUseConsent.CCPA(hasGivenConsent ? .optInSale : .optOutSale)
+        Chartboost.addDataUseConsent(consent)
+        log(.privacyUpdated(setting: consent.privacyStandard.rawValue, value: consent.consent.rawValue))
+        
+        // Set US privacy string if available
         if let privacyString = privacyString {
-            Chartboost.addDataUseConsent(.Custom(privacyStandard: .CCPA, consent: privacyString))
+            let consent = CHBDataUseConsent.Custom(privacyStandard: .CCPA, consent: privacyString)
+            Chartboost.addDataUseConsent(consent)
+            log(.privacyUpdated(setting: consent.privacyStandard.rawValue, value: consent.consent))
         }
     }
     
@@ -121,7 +130,9 @@ final class ChartboostAdapter: PartnerAdapter {
     /// - parameter isSubject: `true` if the user is subject, `false` otherwise.
     func setUserSubjectToCOPPA(_ isSubject: Bool) {
         // Set Chartboost COPPA consent
-        Chartboost.addDataUseConsent(.COPPA(isChildDirected: isSubject))
+        let consent = CHBDataUseConsent.COPPA(isChildDirected: isSubject)
+        Chartboost.addDataUseConsent(consent)
+        log(.privacyUpdated(setting: consent.privacyStandard.rawValue, value: consent.isChildDirected))
     }
 }
 
