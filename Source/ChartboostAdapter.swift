@@ -17,18 +17,29 @@ final class ChartboostAdapter: PartnerAdapter {
     
     /// The last value set on `setGDPRConsentStatus(_:)`.
     private var gdprStatus: GDPRConsentStatus = .unknown
-    
-    /// Ad adapters created on load, keyed by request identifier.
-    private var adAdapters: [String: ChartboostAdAdapter] = [:]
-    
+        
+    /// The version of the partner SDK, e.g. "5.13.2"
     let partnerSDKVersion = Chartboost.getSDKVersion()
     
+    /// The version of the adapter, e.g. "2.5.13.2.0"
+    /// The first number is Helium SDK's major version. The next 3 numbers are the partner SDK version. The last number is the build version of the adapter.
     let adapterVersion = "4.9.0.0.0"
     
+    /// The partner's identifier.
     let partnerIdentifier = "chartboost"
     
+    /// The partner's name in a human-friendly version.
     let partnerDisplayName = "Chartboost"
     
+    /// The designated initializer for the adapter.
+    /// Helium SDK will use this constructor to create instances of conforming types.
+    /// - parameter storage: An object that exposes storage managed by the Helium SDK to the adapter.
+    /// It includes a list of created `PartnerAdAdapter` instances. You may ignore this parameter if you don't need it.
+    init(storage: PartnerAdapterStorage) { }
+    
+    /// Does any setup needed before beginning to load ads.
+    /// - parameter configuration: Configuration data for the adapter to set up.
+    /// - parameter completion: Closure to be performed by the adapter when it's done setting up. It should include an error indicating the cause for failure or `nil` if the operation finished successfully.
     func setUp(with configuration: PartnerConfiguration, completion: @escaping (Error?) -> Void) {
         log(.setUpStarted)
         // Get credentials, fail early if they are unavailable
@@ -51,58 +62,35 @@ final class ChartboostAdapter: PartnerAdapter {
         }
     }
     
-    func fetchBidderInformation(request: PreBidRequest, completion: @escaping ([String : String]) -> Void) {
+    /// Fetches bidding tokens needed for the partner to participate in an auction.
+    /// - parameter request: Information about the ad load request.
+    /// - parameter completion: Closure to be performed with the fetched info.
+    func fetchBidderInformation(request: PreBidRequest, completion: @escaping ([String : String]?) -> Void) {
         // Chartboost does not currently provide any bidding token
-        log(.fetchBidderInfoStarted(request))
-        log(.fetchBidderInfoSucceeded(request))
-        completion([:])
+        completion(nil)
     }
     
-    func load(request: PartnerAdLoadRequest, partnerAdDelegate: PartnerAdDelegate, viewController: UIViewController?, completion: @escaping (Result<PartnerAd, Error>) -> Void) {
-        log(.loadStarted(request))
-        // Running on main queue is required for banner creation since it's an UIView
-        DispatchQueue.main.async { [self] in
-            // Create ad adapter, save it and start loading
-            let adAdapter = ChartboostAdAdapter(adapter: self, request: request, partnerAdDelegate: partnerAdDelegate)
-            adAdapters[request.identifier] = adAdapter
-            adAdapter.load(with: viewController, completion: completion)
-        }
+    /// Provides a new ad adapter in charge of communicating with a single partner ad instance.
+    /// Helium SDK calls this method to create a new ad adapter for each new load request. Ad adapter instances are never reused.
+    /// Helium SDK takes care of storing and disposing of ad adapter instances so you don't need to.
+    /// `invalidate()` is called on ad adapters before disposing of them in case partners need to perform any custom logic before the object gets destroyed.
+    /// If for some reason a new ad adapter cannot be provided an error should be thrown.
+    /// - parameter request: Information about the ad load request.
+    /// - parameter delegate: The delegate that will receive ad life-cycle notifications.
+    func makeAdAdapter(request: PartnerAdLoadRequest, delegate: PartnerAdDelegate) throws -> PartnerAdAdapter {
+        ChartboostAdAdapter(adapter: self, request: request, delegate: delegate)
     }
     
-    func show(_ partnerAd: PartnerAd, viewController: UIViewController, completion: @escaping (Result<PartnerAd, Error>) -> Void) {
-        log(.showStarted(partnerAd))
-        // Fail if no ad adapter available
-        guard let adAdapter = adAdapters[partnerAd.request.identifier] else {
-            let error = error(.noAdReadyToShow(partnerAd))
-            log(.showFailed(partnerAd, error: error))
-            completion(.failure(error))
-            return
-        }
-        // Show the ad
-        adAdapter.show(with: viewController, completion: completion)
-    }
-    
-    func invalidate(_ partnerAd: PartnerAd, completion: @escaping (Result<PartnerAd, Error>) -> Void) {
-        log(.invalidateStarted(partnerAd))
-        if adAdapters[partnerAd.request.identifier] == nil {
-            // Fail if no ad to invalidate
-            let error = error(.noAdToInvalidate(partnerAd))
-            log(.invalidateFailed(partnerAd, error: error))
-            completion(.failure(error))
-        } else {
-            // Succeed if we had an ad
-            adAdapters[partnerAd.request.identifier] = nil
-            log(.invalidateSucceeded(partnerAd))
-            completion(.success(partnerAd))
-        }
-    }
-    
+    /// Indicates if GDPR applies or not.
+    /// - parameter applies: `true` if GDPR applies, `false` otherwise.
     func setGDPRApplies(_ applies: Bool) {
         // Save value and set GDPR on Chartboost using both gdprApplies and gdprStatus
         gdprApplies = applies
         updateGDPRConsent()
     }
     
+    /// Indicates the user's GDPR consent status.
+    /// - parameter status: One of the `GDPRConsentStatus` values depending on the user's preference.
     func setGDPRConsentStatus(_ status: GDPRConsentStatus) {
         // Save value and set GDPR on Chartboost using both gdprApplies and gdprStatus
         gdprStatus = status
@@ -118,6 +106,9 @@ final class ChartboostAdapter: PartnerAdapter {
         }
     }
     
+    /// Indicates the CCPA status both as a boolean and as a IAB US privacy string.
+    /// - parameter hasGivenConsent: A boolean indicating if the user has given consent.
+    /// - parameter privacyString: A IAB-compliant string indicating the CCPA status.
     func setCCPAConsent(hasGivenConsent: Bool, privacyString: String?) {
         // Set Chartboost CCPA consent
         Chartboost.addDataUseConsent(.CCPA(hasGivenConsent ? .optInSale : .optOutSale))
@@ -126,6 +117,8 @@ final class ChartboostAdapter: PartnerAdapter {
         }
     }
     
+    /// Indicates if the user is subject to COPPA or not.
+    /// - parameter isSubject: `true` if the user is subject, `false` otherwise.
     func setUserSubjectToCOPPA(_ isSubject: Bool) {
         // Set Chartboost COPPA consent
         Chartboost.addDataUseConsent(.COPPA(isChildDirected: isSubject))

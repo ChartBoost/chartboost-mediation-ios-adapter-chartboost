@@ -9,47 +9,54 @@ import Foundation
 import HeliumSdk
 import ChartboostSDK
 
-/// Helium Chartboost adapter ad wrapper.
-final class ChartboostAdAdapter: NSObject, PartnerLogger, PartnerErrorFactory {
+/// Helium Chartboost ad adapter.
+final class ChartboostAdAdapter: NSObject, PartnerAdAdapter {
     
-    /// The main adapter instance.
+    /// The associated partner adapter.
     let adapter: PartnerAdapter
     
-    /// The load request that originated this ad.
+    /// The ad load request associated to the ad adapter.
+    /// It should be the one provided on `PartnerAdapter.makeAdAdapter(request:delegate:)`.
     let request: PartnerAdLoadRequest
     
     /// The partner ad delegate to send ad life-cycle events to.
-    weak var partnerAdDelegate: PartnerAdDelegate?
+    /// It should be the one provided on `PartnerAdapter.makeAdAdapter(request:delegate:)`.
+    weak var delegate: PartnerAdDelegate?
+    
+    /// The partner ad view to display inline. E.g. a banner view.
+    /// Should be nil for full-screen ads.
+    var inlineView: UIView? { chartboostAd as? UIView }
     
     /// The Chartboost SDK ad.
     private let chartboostAd: CHBAd
-    
-    /// The partner ad model passed in PartnerAdDelegate callbacks.
-    private lazy var partnerAd = PartnerAd(ad: chartboostAd, details: [:], request: request)
-    
+        
     /// The completion for the ongoing load operation.
-    private var loadCompletion: ((Result<PartnerAd, Error>) -> Void)?
+    private var loadCompletion: ((Result<PartnerEventDetails, Error>) -> Void)?
     
     /// The completion for the ongoing show operation.
-    private var showCompletion: ((Result<PartnerAd, Error>) -> Void)?
+    private var showCompletion: ((Result<PartnerEventDetails, Error>) -> Void)?
     
-    init(adapter: PartnerAdapter, request: PartnerAdLoadRequest, partnerAdDelegate: PartnerAdDelegate) {
+    init(adapter: PartnerAdapter, request: PartnerAdLoadRequest, delegate: PartnerAdDelegate) {
         self.request = request
-        self.partnerAdDelegate = partnerAdDelegate
+        self.delegate = delegate
         self.adapter = adapter
         self.chartboostAd = Self.makeChartboostAd(request: request, adapter: adapter)
         super.init()
         self.chartboostAd.delegate = self
     }
     
-    func load(with viewController: UIViewController?, completion: @escaping (Result<PartnerAd, Error>) -> Void) {
+    /// Loads an ad.
+    /// - parameter viewController: The view controller on which the ad will be presented on. Needed on load for some banners.
+    /// - parameter completion: Closure to be performed once the ad has been loaded.
+    func load(with viewController: UIViewController?, completion: @escaping (Result<PartnerEventDetails, Error>) -> Void) {
+        log(.loadStarted(self))
         // Save load completion to execute later on didCacheAd.
         // Banners are expected to show immediately after loading, so we call show() on load for banner ads only
         if request.format == .banner {
             // Banners require a view controller on load to be able to show
             guard let viewController = viewController else {
                 let error = error(.noViewController)
-                log(.loadFailed(request, error: error))
+                log(.loadFailed(self, error: error))
                 completion(.failure(error))
                 return
             }
@@ -74,12 +81,16 @@ final class ChartboostAdAdapter: NSObject, PartnerLogger, PartnerErrorFactory {
         } else {
             // Programmatic load missing the bid_response setting
             let error = error(.noBidPayload(request))
-            log(.loadFailed(request, error: error))
+            log(.loadFailed(self, error: error))
             completion(.failure(error))
         }
     }
     
-    func show(with viewController: UIViewController, completion: @escaping (Result<PartnerAd, Error>) -> Void) {
+    /// Shows a loaded ad.
+    /// It will never get called for banner ads. You may leave the implementation blank for that ad format.
+    /// - parameter viewController: The view controller on which the ad will be presented on.
+    /// - parameter completion: Closure to be performed once the ad has been shown.
+    func show(with viewController: UIViewController, completion: @escaping (Result<PartnerEventDetails, Error>) -> Void) {
         // Save show completion to execute later on didShowAd
         showCompletion = completion
         // Show the ad
@@ -92,12 +103,12 @@ extension ChartboostAdAdapter: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
     func didCacheAd(_ event: CHBCacheEvent, error partnerError: CHBCacheError?) {
         // Report load finished
         if let partnerError = partnerError {
-            let error = error(.loadFailure(request), error: partnerError)
-            log(.loadFailed(request, error: error))
+            let error = error(.loadFailure(self), error: partnerError)
+            log(.loadFailed(self, error: error))
             loadCompletion?(.failure(error)) ?? log(.loadResultIgnored)
         } else {
-            log(.loadSucceeded(partnerAd))
-            loadCompletion?(.success(partnerAd)) ?? log(.loadResultIgnored)
+            log(.loadSucceeded(self))
+            loadCompletion?(.success([:])) ?? log(.loadResultIgnored)
         }
         loadCompletion = nil
     }
@@ -109,39 +120,39 @@ extension ChartboostAdAdapter: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
     func didShowAd(_ event: CHBShowEvent, error partnerError: CHBShowError?) {
         // Report show finished
         if let partnerError = partnerError {
-            let error = error(.showFailure(partnerAd), error: partnerError)
-            log(.showFailed(partnerAd, error: error))
+            let error = error(.showFailure(self), error: partnerError)
+            log(.showFailed(self, error: error))
             showCompletion?(.failure(error)) ?? log(.showResultIgnored)
         } else {
-            log(.showSucceeded(partnerAd))
-            showCompletion?(.success(partnerAd)) ?? log(.showResultIgnored)
+            log(.showSucceeded(self))
+            showCompletion?(.success([:])) ?? log(.showResultIgnored)
         }
         showCompletion = nil
     }
     
     func didClickAd(_ event: CHBClickEvent, error: CHBClickError?) {
         // Report click
-        log(.didClick(partnerAd, error: error))
-        partnerAdDelegate?.didClick(partnerAd) ?? log(.delegateUnavailable)
+        log(.didClick(self, error: error))
+        delegate?.didClick(self, details: [:]) ?? log(.delegateUnavailable)
     }
     
     func didRecordImpression(_ event: CHBImpressionEvent) {
         // Report impression tracked
-        log(.didTrackImpression(partnerAd))
-        partnerAdDelegate?.didTrackImpression(partnerAd) ?? log(.delegateUnavailable)
+        log(.didTrackImpression(self))
+        delegate?.didTrackImpression(self, details: [:]) ?? log(.delegateUnavailable)
     }
     
     func didDismissAd(_ event: CHBDismissEvent) {
         // Report dismiss
-        log(.didDismiss(partnerAd, error: nil))
-        partnerAdDelegate?.didDismiss(partnerAd, error: nil) ?? log(.delegateUnavailable)
+        log(.didDismiss(self, error: nil))
+        delegate?.didDismiss(self, details: [:], error: nil) ?? log(.delegateUnavailable)
     }
     
     func didEarnReward(_ event: CHBRewardEvent) {
         // Report reward
         let reward = Reward(amount: event.reward, label: nil)
-        log(.didReward(partnerAd, reward: reward))
-        partnerAdDelegate?.didReward(partnerAd, reward: reward) ?? log(.delegateUnavailable)
+        log(.didReward(self, reward: reward))
+        delegate?.didReward(self, details: [:], reward: reward) ?? log(.delegateUnavailable)
     }
     
     func didFinishHandlingClick(_ event: CHBClickEvent, error: CHBClickError?) {
