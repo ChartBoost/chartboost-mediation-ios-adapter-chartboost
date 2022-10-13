@@ -46,7 +46,7 @@ final class ChartboostAdAdapter: NSObject, PartnerAdAdapter {
     /// - parameter viewController: The view controller on which the ad will be presented on. Needed on load for some banners.
     /// - parameter completion: Closure to be performed once the ad has been loaded.
     func load(with viewController: UIViewController?, completion: @escaping (Result<PartnerEventDetails, Error>) -> Void) {
-        log(.loadStarted(self))
+        log(.loadStarted)
         
         // Create Chartboost ad on main thread, since CHBBanner inherits from a UIKit class
         DispatchQueue.main.async { [self] in
@@ -59,7 +59,7 @@ final class ChartboostAdAdapter: NSObject, PartnerAdAdapter {
                 // Banners require a view controller on load to be able to show
                 guard let viewController = viewController else {
                     let error = error(.noViewController)
-                    log(.loadFailed(self, error: error))
+                    log(.loadFailed(error))
                     completion(.failure(error))
                     return
                 }
@@ -84,8 +84,8 @@ final class ChartboostAdAdapter: NSObject, PartnerAdAdapter {
                 chartboostAd.cache(bidResponse: bidResponse)
             } else {
                 // Programmatic load missing the bid_response setting
-                let error = error(.noBidPayload(request))
-                log(.loadFailed(self, error: error))
+                let error = error(.noBidPayload)
+                log(.loadFailed(error))
                 completion(.failure(error))
             }
         }
@@ -96,14 +96,18 @@ final class ChartboostAdAdapter: NSObject, PartnerAdAdapter {
     /// - parameter viewController: The view controller on which the ad will be presented on.
     /// - parameter completion: Closure to be performed once the ad has been shown.
     func show(with viewController: UIViewController, completion: @escaping (Result<PartnerEventDetails, Error>) -> Void) {
+        log(.showStarted)
+        
         // Fail early if no ad
         guard let chartboostAd = chartboostAd else {
-            let error = error(.noAdReadyToShow(self))
-            log(.showFailed(self, error: error))
+            let error = error(.noAdReadyToShow)
+            log(.showFailed(error))
             return completion(.failure(error))
         }
+        
         // Save show completion to execute later on didShowAd
         showCompletion = completion
+        
         // Show the ad
         chartboostAd.show(from: viewController)
     }
@@ -114,11 +118,11 @@ extension ChartboostAdAdapter: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
     func didCacheAd(_ event: CHBCacheEvent, error partnerError: CHBCacheError?) {
         // Report load finished
         if let partnerError = partnerError {
-            let error = error(.loadFailure(self), error: partnerError)
-            log(.loadFailed(self, error: error))
+            let error = error(.loadFailure, error: partnerError)
+            log(.loadFailed(error))
             loadCompletion?(.failure(error)) ?? log(.loadResultIgnored)
         } else {
-            log(.loadSucceeded(self))
+            log(.loadSucceeded)
             loadCompletion?(.success([:])) ?? log(.loadResultIgnored)
         }
         loadCompletion = nil
@@ -131,11 +135,11 @@ extension ChartboostAdAdapter: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
     func didShowAd(_ event: CHBShowEvent, error partnerError: CHBShowError?) {
         // Report show finished
         if let partnerError = partnerError {
-            let error = error(.showFailure(self), error: partnerError)
-            log(.showFailed(self, error: error))
+            let error = error(.showFailure, error: partnerError)
+            log(.showFailed(error))
             showCompletion?(.failure(error)) ?? log(.showResultIgnored)
         } else {
-            log(.showSucceeded(self))
+            log(.showSucceeded)
             showCompletion?(.success([:])) ?? log(.showResultIgnored)
         }
         showCompletion = nil
@@ -143,26 +147,26 @@ extension ChartboostAdAdapter: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
     
     func didClickAd(_ event: CHBClickEvent, error: CHBClickError?) {
         // Report click
-        log(.didClick(self, error: error))
+        log(.didClick(error))
         delegate?.didClick(self, details: [:]) ?? log(.delegateUnavailable)
     }
     
     func didRecordImpression(_ event: CHBImpressionEvent) {
         // Report impression tracked
-        log(.didTrackImpression(self))
+        log(.didTrackImpression)
         delegate?.didTrackImpression(self, details: [:]) ?? log(.delegateUnavailable)
     }
     
     func didDismissAd(_ event: CHBDismissEvent) {
         // Report dismiss
-        log(.didDismiss(self, error: nil))
+        log(.didDismiss(nil))
         delegate?.didDismiss(self, details: [:], error: nil) ?? log(.delegateUnavailable)
     }
     
     func didEarnReward(_ event: CHBRewardEvent) {
         // Report reward
         let reward = Reward(amount: event.reward, label: nil)
-        log(.didReward(self, reward: reward))
+        log(.didReward(reward))
         delegate?.didReward(self, details: [:], reward: reward) ?? log(.delegateUnavailable)
     }
     
