@@ -1,5 +1,5 @@
 //
-//  ChartboostAdAdapter.swift
+//  ChartboostAdapterAd.swift
 //  HeliumCanary
 //
 //  Created by Daniel Barros on 9/7/22.
@@ -9,18 +9,18 @@ import Foundation
 import HeliumSdk
 import ChartboostSDK
 
-/// Helium Chartboost ad adapter.
-final class ChartboostAdAdapter: NSObject, PartnerAdAdapter {
+/// Helium Chartboost adapter ad.
+final class ChartboostAdapterAd: NSObject, PartnerAd {
     
-    /// The associated partner adapter.
+    /// The partner adapter that created this ad.
     let adapter: PartnerAdapter
     
-    /// The ad load request associated to the ad adapter.
-    /// It should be the one provided on `PartnerAdapter.makeAdAdapter(request:delegate:)`.
+    /// The ad load request associated to the ad.
+    /// It should be the one provided on `PartnerAdapter.makeAd(request:delegate:)`.
     let request: PartnerAdLoadRequest
     
     /// The partner ad delegate to send ad life-cycle events to.
-    /// It should be the one provided on `PartnerAdapter.makeAdAdapter(request:delegate:)`.
+    /// It should be the one provided on `PartnerAdapter.makeAd(request:delegate:)`.
     weak var delegate: PartnerAdDelegate?
     
     /// The partner ad view to display inline. E.g. a banner view.
@@ -113,7 +113,7 @@ final class ChartboostAdAdapter: NSObject, PartnerAdAdapter {
     }
 }
 
-extension ChartboostAdAdapter: CHBInterstitialDelegate, CHBRewardedDelegate, CHBBannerDelegate {
+extension ChartboostAdapterAd: CHBInterstitialDelegate, CHBRewardedDelegate, CHBBannerDelegate {
     
     func didCacheAd(_ event: CHBCacheEvent, error partnerError: CHBCacheError?) {
         // Report load finished
@@ -175,7 +175,7 @@ extension ChartboostAdAdapter: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
     }
 }
 
-private extension ChartboostAdAdapter {
+private extension ChartboostAdapterAd {
     
     func makeChartboostAd() -> CHBAd {
         let mediation = CHBMediation(

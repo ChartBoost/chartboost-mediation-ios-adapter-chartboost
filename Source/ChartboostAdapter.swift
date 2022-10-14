@@ -34,7 +34,7 @@ final class ChartboostAdapter: PartnerAdapter {
     /// The designated initializer for the adapter.
     /// Helium SDK will use this constructor to create instances of conforming types.
     /// - parameter storage: An object that exposes storage managed by the Helium SDK to the adapter.
-    /// It includes a list of created `PartnerAdAdapter` instances. You may ignore this parameter if you don't need it.
+    /// It includes a list of created `PartnerAd` instances. You may ignore this parameter if you don't need it.
     init(storage: PartnerAdapterStorage) { }
     
     /// Does any setup needed before beginning to load ads.
@@ -70,15 +70,15 @@ final class ChartboostAdapter: PartnerAdapter {
         completion(nil)
     }
     
-    /// Provides a new ad adapter in charge of communicating with a single partner ad instance.
-    /// Helium SDK calls this method to create a new ad adapter for each new load request. Ad adapter instances are never reused.
-    /// Helium SDK takes care of storing and disposing of ad adapter instances so you don't need to.
-    /// `invalidate()` is called on ad adapters before disposing of them in case partners need to perform any custom logic before the object gets destroyed.
-    /// If for some reason a new ad adapter cannot be provided an error should be thrown.
+    /// Creates a new ad object in charge of communicating with a single partner SDK ad instance.
+    /// Helium SDK calls this method to create a new ad for each new load request. Ad instances are never reused.
+    /// Helium SDK takes care of storing and disposing of ad instances so you don't need to.
+    /// `invalidate()` is called on ads before disposing of them in case partners need to perform any custom logic before the object gets destroyed.
+    /// If for some reason a new ad cannot be provided an error should be thrown.
     /// - parameter request: Information about the ad load request.
     /// - parameter delegate: The delegate that will receive ad life-cycle notifications.
-    func makeAdAdapter(request: PartnerAdLoadRequest, delegate: PartnerAdDelegate) throws -> PartnerAdAdapter {
-        ChartboostAdAdapter(adapter: self, request: request, delegate: delegate)
+    func makeAd(request: PartnerAdLoadRequest, delegate: PartnerAdDelegate) throws -> PartnerAd {
+        ChartboostAdapterAd(adapter: self, request: request, delegate: delegate)
     }
     
     /// Indicates if GDPR applies or not.
