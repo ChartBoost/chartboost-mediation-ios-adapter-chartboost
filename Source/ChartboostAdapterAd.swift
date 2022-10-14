@@ -147,7 +147,7 @@ extension ChartboostAdapterAd: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
     
     func didClickAd(_ event: CHBClickEvent, error: CHBClickError?) {
         // Report click
-        log(.didClick(error))
+        log(.didClick(error: error))
         delegate?.didClick(self, details: [:]) ?? log(.delegateUnavailable)
     }
     
@@ -159,7 +159,7 @@ extension ChartboostAdapterAd: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
     
     func didDismissAd(_ event: CHBDismissEvent) {
         // Report dismiss
-        log(.didDismiss(nil))
+        log(.didDismiss(error: event.error))
         delegate?.didDismiss(self, details: [:], error: nil) ?? log(.delegateUnavailable)
     }
     
