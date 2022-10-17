@@ -11,13 +11,7 @@ import ChartboostSDK
 
 /// Helium Chartboost adapter.
 final class ChartboostAdapter: PartnerAdapter {
-    
-    /// The last value set on `setGDPRApplies(_:)`.
-    private var gdprApplies = false
-    
-    /// The last value set on `setGDPRConsentStatus(_:)`.
-    private var gdprStatus: GDPRConsentStatus = .unknown
-        
+            
     /// The version of the partner SDK, e.g. "5.13.2"
     let partnerSDKVersion = Chartboost.getSDKVersion()
     
@@ -81,26 +75,12 @@ final class ChartboostAdapter: PartnerAdapter {
         ChartboostAdapterAd(adapter: self, request: request, delegate: delegate)
     }
     
-    /// Indicates if GDPR applies or not.
-    /// - parameter applies: `true` if GDPR applies, `false` otherwise.
-    func setGDPRApplies(_ applies: Bool) {
-        // Save value and set GDPR on Chartboost using both gdprApplies and gdprStatus
-        gdprApplies = applies
-        updateGDPRConsent()
-    }
-    
-    /// Indicates the user's GDPR consent status.
+    /// Indicates if GDPR applies or not and the user's GDPR consent status.
+    /// - parameter applies: `true` if GDPR applies, `false` if not, `nil` if the publisher has not provided this information.
     /// - parameter status: One of the `GDPRConsentStatus` values depending on the user's preference.
-    func setGDPRConsentStatus(_ status: GDPRConsentStatus) {
-        // Save value and set GDPR on Chartboost using both gdprApplies and gdprStatus
-        gdprStatus = status
-        updateGDPRConsent()
-    }
-    
-    private func updateGDPRConsent() {
-        // Set Chartboost GDPR consent using both gdprApplies and gdprStatus
-        if gdprApplies {
-            let consent = CHBDataUseConsent.GDPR(gdprStatus == .granted ? .behavioral : .nonBehavioral)
+    func setGDPR(applies: Bool?, status: GDPRConsentStatus) {
+        if applies == true {
+            let consent = CHBDataUseConsent.GDPR(status == .granted ? .behavioral : .nonBehavioral)
             Chartboost.addDataUseConsent(consent)
             log(.privacyUpdated(setting: consent.privacyStandard.rawValue, value: consent.consent.rawValue))
         } else {
