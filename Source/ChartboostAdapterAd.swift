@@ -129,7 +129,7 @@ extension ChartboostAdapterAd: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
     }
     
     func willShowAd(_ event: CHBShowEvent) {
-        log("Will show \(request.format) ad with placement \(request.partnerPlacement)")
+        log(.delegateCallIgnored)
     }
     
     func didShowAd(_ event: CHBShowEvent, error partnerError: CHBShowError?) {
@@ -165,13 +165,12 @@ extension ChartboostAdapterAd: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
     
     func didEarnReward(_ event: CHBRewardEvent) {
         // Report reward
-        let reward = Reward(amount: event.reward, label: nil)
-        log(.didReward(reward))
-        delegate?.didReward(self, details: [:], reward: reward) ?? log(.delegateUnavailable)
+        log(.didReward)
+        delegate?.didReward(self, details: [:]) ?? log(.delegateUnavailable)
     }
     
     func didFinishHandlingClick(_ event: CHBClickEvent, error: CHBClickError?) {
-        log("Finished handling click for \(request.format) ad with placement \(request.partnerPlacement)")
+        log(.delegateCallIgnored)
     }
 }
 
