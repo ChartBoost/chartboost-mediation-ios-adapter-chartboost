@@ -92,25 +92,18 @@ final class ChartboostAdapter: PartnerAdapter {
     /// Indicates the CCPA status both as a boolean and as an IAB US privacy string.
     /// - parameter hasGivenConsent: A boolean indicating if the user has given consent.
     /// - parameter privacyString: An IAB-compliant string indicating the CCPA status.
-    func setCCPAConsent(hasGivenConsent: Bool, privacyString: String?) {
-        // Set Chartboost CCPA consent
-        let consent = CHBDataUseConsent.CCPA(hasGivenConsent ? .optInSale : .optOutSale)
+    func setCCPA(hasGivenConsent: Bool, privacyString: String) {
+        // Set US privacy string
+        let consent = CHBDataUseConsent.Custom(privacyStandard: .CCPA, consent: privacyString)
         Chartboost.addDataUseConsent(consent)
-        log(.privacyUpdated(setting: consent.privacyStandard.rawValue, value: consent.consent.rawValue))
-        
-        // Set US privacy string if available
-        if let privacyString = privacyString {
-            let consent = CHBDataUseConsent.Custom(privacyStandard: .CCPA, consent: privacyString)
-            Chartboost.addDataUseConsent(consent)
-            log(.privacyUpdated(setting: consent.privacyStandard.rawValue, value: consent.consent))
-        }
+        log(.privacyUpdated(setting: consent.privacyStandard.rawValue, value: consent.consent))
     }
     
     /// Indicates if the user is subject to COPPA or not.
-    /// - parameter isSubject: `true` if the user is subject, `false` otherwise.
-    func setUserSubjectToCOPPA(_ isSubject: Bool) {
+    /// - parameter isChildDirected: `true` if the user is subject to COPPA, `false` otherwise.
+    func setCOPPA(isChildDirected: Bool) {
         // Set Chartboost COPPA consent
-        let consent = CHBDataUseConsent.COPPA(isChildDirected: isSubject)
+        let consent = CHBDataUseConsent.COPPA(isChildDirected: isChildDirected)
         Chartboost.addDataUseConsent(consent)
         log(.privacyUpdated(setting: consent.privacyStandard.rawValue, value: consent.isChildDirected))
     }
