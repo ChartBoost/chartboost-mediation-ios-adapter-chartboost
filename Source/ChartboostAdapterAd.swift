@@ -79,7 +79,7 @@ final class ChartboostAdapterAd: NSObject, PartnerAd {
             if request.adm == nil {
                 // Non-programmatic load
                 chartboostAd.cache()
-            } else if let bidResponse = request.partnerSettings["bid_response"] {
+            } else if let bidResponse = request.partnerSettings["bid_response"] as? String {
                 // Programmatic load
                 chartboostAd.cache(bidResponse: bidResponse)
             } else {
