@@ -73,7 +73,7 @@ final class ChartboostAdapter: PartnerAdapter {
     /// - parameter request: Information about the ad load request.
     /// - parameter delegate: The delegate that will receive ad life-cycle notifications.
     func makeAd(request: PartnerAdLoadRequest, delegate: PartnerAdDelegate) throws -> PartnerAd {
-        ChartboostAdapterAd(adapter: self, request: request, delegate: delegate)
+        try ChartboostAdapterAd(adapter: self, request: request, delegate: delegate)
     }
     
     /// Indicates if GDPR applies or not and the user's GDPR consent status.

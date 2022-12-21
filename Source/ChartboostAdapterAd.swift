@@ -28,7 +28,7 @@ final class ChartboostAdapterAd: NSObject, PartnerAd {
     var inlineView: UIView? { chartboostAd as? UIView }
     
     /// The Chartboost SDK ad.
-    private var chartboostAd: CHBAd?
+    private let chartboostAd: CHBAd
         
     /// The completion for the ongoing load operation.
     private var loadCompletion: ((Result<PartnerEventDetails, Error>) -> Void)?
@@ -36,10 +36,11 @@ final class ChartboostAdapterAd: NSObject, PartnerAd {
     /// The completion for the ongoing show operation.
     private var showCompletion: ((Result<PartnerEventDetails, Error>) -> Void)?
     
-    init(adapter: PartnerAdapter, request: PartnerAdLoadRequest, delegate: PartnerAdDelegate) {
+    init(adapter: PartnerAdapter, request: PartnerAdLoadRequest, delegate: PartnerAdDelegate) throws {
         self.request = request
         self.delegate = delegate
         self.adapter = adapter
+        self.chartboostAd = try Self.makeChartboostAd(adapter: adapter, request: request)
     }
     
     /// Loads an ad.
@@ -48,55 +49,43 @@ final class ChartboostAdapterAd: NSObject, PartnerAd {
     func load(with viewController: UIViewController?, completion: @escaping (Result<PartnerEventDetails, Error>) -> Void) {
         log(.loadStarted)
         
-        // Create Chartboost ad on main thread, since CHBBanner inherits from a UIKit class
-        DispatchQueue.main.async { [self] in
-            
-            // Create CB ad instance
-            let chartboostAd: CHBAd
-            do {
-                chartboostAd = try makeChartboostAd()
-                self.chartboostAd = chartboostAd
-            } catch {
+        // Save load completion to execute later on didCacheAd.
+        // Banners are expected to show immediately after loading, so we call show() on load for banner ads only
+        if request.format == .banner {
+            // Banners require a view controller on load to be able to show
+            guard let viewController = viewController else {
+                let error = error(.noViewController)
                 log(.loadFailed(error))
                 completion(.failure(error))
                 return
             }
-            
-            // Save load completion to execute later on didCacheAd.
-            // Banners are expected to show immediately after loading, so we call show() on load for banner ads only
-            if request.format == .banner {
-                // Banners require a view controller on load to be able to show
-                guard let viewController = viewController else {
-                    let error = error(.noViewController)
-                    log(.loadFailed(error))
-                    completion(.failure(error))
-                    return
+            // Banners show on load
+            loadCompletion = { [weak self] result in
+                if case .success = result {
+                    self?.chartboostAd.show(from: viewController)
                 }
-                // Banners show on load
-                loadCompletion = { [weak chartboostAd] result in
-                    if case .success = result {
-                        chartboostAd?.show(from: viewController)
-                    }
-                    completion(result)
-                }
-            } else {
-                // Interstitial and rewarded ads don't do anything extra
-                loadCompletion = completion
+                completion(result)
             }
-            
-            // Load the ad
-            if request.adm == nil {
-                // Non-programmatic load
-                chartboostAd.cache()
-            } else if let bidResponse = request.partnerSettings["bid_response"] as? String {
-                // Programmatic load
-                chartboostAd.cache(bidResponse: bidResponse)
-            } else {
-                // Programmatic load missing the bid_response setting
-                let error = error(.noBidPayload)
-                log(.loadFailed(error))
-                completion(.failure(error))
-            }
+        } else {
+            // Interstitial and rewarded ads don't do anything extra
+            loadCompletion = completion
+        }
+        
+        // Set delegate
+        chartboostAd.delegate = self
+        
+        // Load the ad
+        if request.adm == nil {
+            // Non-programmatic load
+            chartboostAd.cache()
+        } else if let bidResponse = request.partnerSettings["bid_response"] as? String {
+            // Programmatic load
+            chartboostAd.cache(bidResponse: bidResponse)
+        } else {
+            // Programmatic load missing the bid_response setting
+            let error = error(.noBidPayload)
+            log(.loadFailed(error))
+            completion(.failure(error))
         }
     }
     
@@ -106,13 +95,6 @@ final class ChartboostAdapterAd: NSObject, PartnerAd {
     /// - parameter completion: Closure to be performed once the ad has been shown.
     func show(with viewController: UIViewController, completion: @escaping (Result<PartnerEventDetails, Error>) -> Void) {
         log(.showStarted)
-        
-        // Fail early if no ad
-        guard let chartboostAd = chartboostAd else {
-            let error = error(.noAdReadyToShow)
-            log(.showFailed(error))
-            return completion(.failure(error))
-        }
         
         // Save show completion to execute later on didShowAd
         showCompletion = completion
@@ -185,7 +167,7 @@ extension ChartboostAdapterAd: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
 
 private extension ChartboostAdapterAd {
     
-    func makeChartboostAd() throws -> CHBAd {
+    static func makeChartboostAd(adapter: PartnerAdapter, request: PartnerAdLoadRequest) throws -> CHBAd {
         let mediation = CHBMediation(
             name: "Helium",
             libraryVersion: Helium.sdkVersion,
@@ -196,23 +178,23 @@ private extension ChartboostAdapterAd {
             return CHBInterstitial(
                 location: request.partnerPlacement,
                 mediation: mediation,
-                delegate: self
+                delegate: nil
             )
         case .rewarded:
             return CHBRewarded(
                 location: request.partnerPlacement,
                 mediation: mediation,
-                delegate: self
+                delegate: nil
             )
         case .banner:
             return CHBBanner(
                 size: request.size ?? CHBBannerSizeStandard,    // Chartboost SDK supports the same sizes as Helium
                 location: request.partnerPlacement,
                 mediation: mediation,
-                delegate: self
+                delegate: nil
             )
         @unknown default:
-            throw error(.loadFailure, description: "Ad format not supported.")
+            throw adapter.error(.adFormatNotSupported(request))
         }
     }
 }
