@@ -50,8 +50,17 @@ final class ChartboostAdapterAd: NSObject, PartnerAd {
         
         // Create Chartboost ad on main thread, since CHBBanner inherits from a UIKit class
         DispatchQueue.main.async { [self] in
-            let chartboostAd = makeChartboostAd()
-            self.chartboostAd = chartboostAd
+            
+            // Create CB ad instance
+            let chartboostAd: CHBAd
+            do {
+                chartboostAd = try makeChartboostAd()
+                self.chartboostAd = chartboostAd
+            } catch {
+                log(.loadFailed(error))
+                completion(.failure(error))
+                return
+            }
             
             // Save load completion to execute later on didCacheAd.
             // Banners are expected to show immediately after loading, so we call show() on load for banner ads only
@@ -176,7 +185,7 @@ extension ChartboostAdapterAd: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
 
 private extension ChartboostAdapterAd {
     
-    func makeChartboostAd() -> CHBAd {
+    func makeChartboostAd() throws -> CHBAd {
         let mediation = CHBMediation(
             name: "Helium",
             libraryVersion: Helium.sdkVersion,
@@ -202,6 +211,8 @@ private extension ChartboostAdapterAd {
                 mediation: mediation,
                 delegate: self
             )
+        @unknown default:
+            throw error(.loadFailure, description: "Ad format not supported.")
         }
     }
 }
