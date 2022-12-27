@@ -54,7 +54,7 @@ final class ChartboostAdapterAd: NSObject, PartnerAd {
         if request.format == .banner {
             // Banners require a view controller on load to be able to show
             guard let viewController = viewController else {
-                let error = error(.noViewController)
+                let error = error(.showFailureViewControllerNotFound)
                 log(.loadFailed(error))
                 completion(.failure(error))
                 return
@@ -83,7 +83,7 @@ final class ChartboostAdapterAd: NSObject, PartnerAd {
             chartboostAd.cache(bidResponse: bidResponse)
         } else {
             // Programmatic load missing the bid_response setting
-            let error = error(.noBidPayload)
+            let error = error(.loadFailureInvalidAdMarkup)
             log(.loadFailed(error))
             completion(.failure(error))
         }
@@ -109,7 +109,7 @@ extension ChartboostAdapterAd: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
     func didCacheAd(_ event: CHBCacheEvent, error partnerError: CHBCacheError?) {
         // Report load finished
         if let partnerError = partnerError {
-            let error = error(.loadFailure, error: partnerError)
+            let error = error(.loadFailureException, error: partnerError)
             log(.loadFailed(error))
             loadCompletion?(.failure(error)) ?? log(.loadResultIgnored)
         } else {
@@ -126,7 +126,7 @@ extension ChartboostAdapterAd: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
     func didShowAd(_ event: CHBShowEvent, error partnerError: CHBShowError?) {
         // Report show finished
         if let partnerError = partnerError {
-            let error = error(.showFailure, error: partnerError)
+            let error = error(.showFailureException, error: partnerError)
             log(.showFailed(error))
             showCompletion?(.failure(error)) ?? log(.showResultIgnored)
         } else {
@@ -194,7 +194,7 @@ private extension ChartboostAdapterAd {
                 delegate: nil
             )
         @unknown default:
-            throw adapter.error(.adFormatNotSupported(request))
+            throw adapter.error(.loadFailureUnsupportedAdFormat)
         }
     }
 }
