@@ -109,7 +109,7 @@ extension ChartboostAdapterAd: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
     func didCacheAd(_ event: CHBCacheEvent, error partnerError: CHBCacheError?) {
         // Report load finished
         if let partnerError = partnerError {
-            let error = error(.loadFailureException, error: partnerError)
+            let error = error(.loadFailureUnknown, error: partnerError)
             log(.loadFailed(error))
             loadCompletion?(.failure(error)) ?? log(.loadResultIgnored)
         } else {
@@ -126,7 +126,7 @@ extension ChartboostAdapterAd: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
     func didShowAd(_ event: CHBShowEvent, error partnerError: CHBShowError?) {
         // Report show finished
         if let partnerError = partnerError {
-            let error = error(.showFailureException, error: partnerError)
+            let error = error(.showFailureUnknown, error: partnerError)
             log(.showFailed(error))
             showCompletion?(.failure(error)) ?? log(.showResultIgnored)
         } else {
