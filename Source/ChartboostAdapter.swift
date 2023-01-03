@@ -39,7 +39,7 @@ final class ChartboostAdapter: PartnerAdapter {
         log(.setUpStarted)
         // Get credentials, fail early if they are unavailable
         guard let appID = configuration.appID, let appSignature = configuration.appSignature else {
-            let error = error(.missingSetUpParameter(key: configuration.appID == nil ? .appIDKey : .appSignatureKey))
+            let error = error(.initializationFailureInvalidCredentials, description: "Missing \(configuration.appID == nil ? String.appIDKey : String.appSignatureKey)")
             log(.setUpFailed(error))
             completion(error)
             return
@@ -47,7 +47,7 @@ final class ChartboostAdapter: PartnerAdapter {
         // Start Chartboost
         Chartboost.start(withAppID: appID, appSignature: appSignature) { [self] partnerError in
             if let partnerError = partnerError {
-                let error = self.error(.setUpFailure, error: partnerError)
+                let error = self.error(.initializationFailureUnknown, error: partnerError)
                 log(.setUpFailed(error))
                 completion(error)
             } else {
