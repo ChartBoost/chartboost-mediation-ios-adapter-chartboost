@@ -75,17 +75,12 @@ final class ChartboostAdapterAd: NSObject, PartnerAd {
         chartboostAd.delegate = self
         
         // Load the ad
-        if request.adm == nil {
+        if let adm = request.adm {
+            // Programmatic load
+            chartboostAd.cache(bidResponse: adm)
+        } else {
             // Non-programmatic load
             chartboostAd.cache()
-        } else if let bidResponse = request.partnerSettings["bid_response"] as? String {
-            // Programmatic load
-            chartboostAd.cache(bidResponse: bidResponse)
-        } else {
-            // Programmatic load missing the bid_response setting
-            let error = error(.loadFailureInvalidAdMarkup)
-            log(.loadFailed(error))
-            completion(.failure(error))
         }
     }
     
