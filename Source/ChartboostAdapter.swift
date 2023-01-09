@@ -64,7 +64,7 @@ final class ChartboostAdapter: PartnerAdapter {
         // Chartboost does not currently provide any bidding token
         log(.fetchBidderInfoStarted(request))
         log(.fetchBidderInfoSucceeded(request))
-        completion(["token": Chartboost.bidderToken()])
+        completion(["buyeruid": Chartboost.bidderToken()])
     }
     
     /// Creates a new ad object in charge of communicating with a single partner SDK ad instance.
