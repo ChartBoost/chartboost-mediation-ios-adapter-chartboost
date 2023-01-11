@@ -18,7 +18,7 @@ final class ChartboostAdapter: PartnerAdapter {
     /// The version of the adapter.
     /// It should have either 5 or 6 digits separated by periods, where the first digit is Helium SDK's major version, the last digit is the adapter's build version, and intermediate digits are the partner SDK's version.
     /// Format: `<Helium major version>.<Partner major version>.<Partner minor version>.<Partner patch version>.<Partner build version>.<Adapter build version>` where `.<Partner build version>` is optional.
-    let adapterVersion = "4.9.0.0.0"
+    let adapterVersion = "4.9.2.0.0"
     
     /// The partner's unique identifier.
     let partnerIdentifier = "chartboost"
@@ -62,7 +62,9 @@ final class ChartboostAdapter: PartnerAdapter {
     /// - parameter completion: Closure to be performed with the fetched info.
     func fetchBidderInformation(request: PreBidRequest, completion: @escaping ([String : String]?) -> Void) {
         // Chartboost does not currently provide any bidding token
-        completion(nil)
+        log(.fetchBidderInfoStarted(request))
+        log(.fetchBidderInfoSucceeded(request))
+        completion(["buyeruid": Chartboost.bidderToken()])
     }
     
     /// Creates a new ad object in charge of communicating with a single partner SDK ad instance.
