@@ -9,7 +9,7 @@ Pod::Spec.new do |spec|
 
   # Source
   spec.module_name  = 'HeliumAdapterChartboost'
-  spec.source       = { :git => 'https://github.com/ChartBoost/helium-ios-adapter-chartboost.git', :tag => '#{spec.version}' }
+  spec.source       = { :git => 'https://github.com/ChartBoost/helium-ios-adapter-chartboost.git', :tag => spec.version }
   spec.source_files = 'Source/**/*.{swift}'
 
   # Minimum supported versions
