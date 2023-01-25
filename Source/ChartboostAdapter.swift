@@ -10,9 +10,9 @@
 //  Created by Daniel Barros on 9/7/22.
 //
 
-import Foundation
-import HeliumSdk
+import ChartboostMediationSDK
 import ChartboostSDK
+import Foundation
 
 /// Helium Chartboost adapter.
 final class ChartboostAdapter: PartnerAdapter {
