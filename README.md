@@ -1,6 +1,6 @@
 # Chartboost Mediation Chartboost Adapter
 
-The Chartboost Mediation Chartboost adapter mediates the Chartboost SDK into the Chartboost Mediation SDK.
+The Chartboost Mediation Chartboost adapter mediates Chartboost via the Chartboost Mediation SDK.
 
 ## Minimum Requirements
 
