@@ -67,14 +67,13 @@ final class ChartboostAdapter: PartnerAdapter {
     func fetchBidderInformation(request: PreBidRequest, completion: @escaping ([String : String]?) -> Void) {
         // Chartboost does not currently provide any bidding token
         log(.fetchBidderInfoStarted(request))
-//        if
-            let bidderToken = Chartboost.bidderToken() //{
+        if let bidderToken = Chartboost.bidderToken() {
             log(.fetchBidderInfoSucceeded(request))
             completion(["buyeruid": bidderToken])
-//        } else {
-//            log(.fetchBidderInfoFailed(request, error: error(.prebidFailureUnknown)))
-//            completion(nil)
-//        }
+        } else {
+            log(.fetchBidderInfoFailed(request, error: error(.prebidFailureUnknown)))
+            completion(nil)
+        }
     }
     
     /// Creates a new ad object in charge of communicating with a single partner SDK ad instance.
