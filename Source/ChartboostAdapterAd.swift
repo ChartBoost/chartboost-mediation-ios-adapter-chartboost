@@ -5,7 +5,7 @@
 
 //
 //  ChartboostAdapterAd.swift
-//  HeliumCanary
+//  ChartboostMediationAdapterChartboost
 //
 //  Created by Daniel Barros on 9/7/22.
 //
@@ -14,7 +14,7 @@ import ChartboostMediationSDK
 import ChartboostSDK
 import Foundation
 
-/// Helium Chartboost adapter ad.
+/// Chartboost Mediation Chartboost adapter ad.
 final class ChartboostAdapterAd: NSObject, PartnerAd {
     
     /// The partner adapter that created this ad.
@@ -186,7 +186,7 @@ private extension ChartboostAdapterAd {
             )
         case .banner:
             return CHBBanner(
-                size: request.size ?? CHBBannerSizeStandard,    // Chartboost SDK supports the same sizes as Helium
+                size: request.size ?? CHBBannerSizeStandard,    // Chartboost SDK supports the same sizes as Chartboost Mediation
                 location: request.partnerPlacement,
                 mediation: mediation,
                 delegate: nil
