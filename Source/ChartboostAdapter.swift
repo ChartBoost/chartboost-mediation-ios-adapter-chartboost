@@ -1,14 +1,7 @@
 // Copyright 2022-2023 Chartboost, Inc.
-// 
+//
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
-
-//
-//  ChartboostAdapter.swift
-//  ChartboostMediationAdapterChartboost
-//
-//  Created by Daniel Barros on 9/7/22.
-//
 
 import ChartboostMediationSDK
 import ChartboostSDK
