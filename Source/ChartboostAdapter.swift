@@ -43,10 +43,10 @@ final class ChartboostAdapter: PartnerAdapter {
             return
         }
         // Start Chartboost
-        Chartboost.start(withAppID: appID, appSignature: appSignature) { [self] partnerError in
-            if let partnerError = partnerError {
-                log(.setUpFailed(partnerError))
-                completion(partnerError)
+        Chartboost.start(withAppID: appID, appSignature: appSignature) { [self] error in
+            if let error = error {
+                log(.setUpFailed(error))
+                completion(error)
             } else {
                 log(.setUpSucceded)
                 completion(nil)
@@ -111,6 +111,88 @@ final class ChartboostAdapter: PartnerAdapter {
         let consent = CHBDataUseConsent.COPPA(isChildDirected: isChildDirected)
         Chartboost.addDataUseConsent(consent)
         log(.privacyUpdated(setting: consent.privacyStandard.rawValue, value: consent.isChildDirected))
+    }
+    
+    /// Maps a partner setup error to a Helium error code.
+    /// Helium SDK calls this method when a setup completion is called with a partner error.
+    ///
+    /// A default implementation is provided that returns `nil`.
+    /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Helium's.
+    /// If some case cannot be mapped return `nil` to let Helium choose a default error code.
+    func mapSetUpError(_ error: Error) -> HeliumError.Code? {
+        guard let error = error as? CHBStartError else {
+            return nil
+        }
+        switch error.code {
+        case .invalidCredentials:
+            return .initializationFailureInvalidCredentials
+        case .networkFailure:
+            return .initializationFailureNetworkingError
+        case .serverError:
+            return .initializationFailureServerError
+        @unknown default:
+            return nil
+        }
+    }
+    
+    /// Maps a partner load error to a Helium error code.
+    /// Helium SDK calls this method when a load completion is called with a partner error.
+    ///
+    /// A default implementation is provided that returns `nil`.
+    /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Helium's.
+    /// If some case cannot be mapped return `nil` to let Helium choose a default error code.
+    func mapLoadError(_ error: Error) -> HeliumError.Code? {
+        guard let error = error as? CHBCacheError else {
+            return nil
+        }
+        switch error.code {
+        case .internal:
+            return .loadFailureUnknown
+        case .internetUnavailable:
+            return .loadFailureNoConnectivity
+        case .networkFailure:
+            return .loadFailureNetworkingError
+        case .noAdFound:
+            return .loadFailureNoFill
+        case .sessionNotStarted:
+            return .loadFailurePartnerNotInitialized
+        case .assetDownloadFailure:
+            return .loadFailureNetworkingError
+        case .publisherDisabled:
+            return .loadFailureAborted
+        case .serverError:
+            return .loadFailureServerError
+        @unknown default:
+            return nil
+        }
+    }
+    
+    /// Maps a partner show error to a Helium error code.
+    /// Helium SDK calls this method when a show completion is called with a partner error.
+    ///
+    /// A default implementation is provided that returns `nil`.
+    /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Helium's.
+    /// If some case cannot be mapped return `nil` to let Helium choose a default error code.
+    func mapShowError(_ error: Error) -> HeliumError.Code? {
+        guard let error = error as? CHBShowError else {
+            return nil
+        }
+        switch error.code {
+        case .internal:
+            return .showFailureUnknown
+        case .sessionNotStarted:
+            return .showFailureNotInitialized
+        case .internetUnavailable:
+            return .showFailureNoConnectivity
+        case .presentationFailure:
+            return .showFailureUnknown
+        case .noCachedAd:
+            return .showFailureAdNotReady
+        case .noViewController:
+            return .showFailureViewControllerNotFound
+        @unknown default:
+            return nil
+        }
     }
 }
 
