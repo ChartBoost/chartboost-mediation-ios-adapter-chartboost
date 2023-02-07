@@ -160,7 +160,7 @@ private extension ChartboostAdapterAd {
     
     static func makeChartboostAd(adapter: PartnerAdapter, request: PartnerAdLoadRequest) throws -> CHBAd {
         let mediation = CHBMediation(
-            name: "Helium",
+            name: "Chartboost",
             libraryVersion: Helium.sdkVersion,
             adapterVersion: adapter.adapterVersion
         )
