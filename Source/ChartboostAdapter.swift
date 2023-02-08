@@ -119,7 +119,7 @@ final class ChartboostAdapter: PartnerAdapter {
     /// A default implementation is provided that returns `nil`.
     /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Helium's.
     /// If some case cannot be mapped return `nil` to let Helium choose a default error code.
-    func mapSetUpError(_ error: Error) -> HeliumError.Code? {
+    func mapSetUpError(_ error: Error) -> ChartboostMediationError.Code? {
         guard let error = error as? CHBStartError else {
             return nil
         }
@@ -141,7 +141,7 @@ final class ChartboostAdapter: PartnerAdapter {
     /// A default implementation is provided that returns `nil`.
     /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Helium's.
     /// If some case cannot be mapped return `nil` to let Helium choose a default error code.
-    func mapLoadError(_ error: Error) -> HeliumError.Code? {
+    func mapLoadError(_ error: Error) -> ChartboostMediationError.Code? {
         guard let error = error as? CHBCacheError else {
             return nil
         }
@@ -173,7 +173,7 @@ final class ChartboostAdapter: PartnerAdapter {
     /// A default implementation is provided that returns `nil`.
     /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Helium's.
     /// If some case cannot be mapped return `nil` to let Helium choose a default error code.
-    func mapShowError(_ error: Error) -> HeliumError.Code? {
+    func mapShowError(_ error: Error) -> ChartboostMediationError.Code? {
         guard let error = error as? CHBShowError else {
             return nil
         }
