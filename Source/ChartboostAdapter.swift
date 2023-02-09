@@ -84,6 +84,7 @@ final class ChartboostAdapter: PartnerAdapter {
     /// - parameter applies: `true` if GDPR applies, `false` if not, `nil` if the publisher has not provided this information.
     /// - parameter status: One of the `GDPRConsentStatus` values depending on the user's preference.
     func setGDPR(applies: Bool?, status: GDPRConsentStatus) {
+        // See https://answers.chartboost.com/en-us/child_article/ios-privacy-methods
         if applies == true {
             let consent = CHBDataUseConsent.GDPR(status == .granted ? .behavioral : .nonBehavioral)
             Chartboost.addDataUseConsent(consent)
@@ -99,6 +100,7 @@ final class ChartboostAdapter: PartnerAdapter {
     /// - parameter privacyString: An IAB-compliant string indicating the CCPA status.
     func setCCPA(hasGivenConsent: Bool, privacyString: String) {
         // Set US privacy string
+        // See https://answers.chartboost.com/en-us/child_article/ios-privacy-methods
         let consent = CHBDataUseConsent.Custom(privacyStandard: .CCPA, consent: privacyString)
         Chartboost.addDataUseConsent(consent)
         log(.privacyUpdated(setting: consent.privacyStandard.rawValue, value: consent.consent))
@@ -108,6 +110,7 @@ final class ChartboostAdapter: PartnerAdapter {
     /// - parameter isChildDirected: `true` if the user is subject to COPPA, `false` otherwise.
     func setCOPPA(isChildDirected: Bool) {
         // Set Chartboost COPPA consent
+        // See https://answers.chartboost.com/en-us/child_article/ios-privacy-methods
         let consent = CHBDataUseConsent.COPPA(isChildDirected: isChildDirected)
         Chartboost.addDataUseConsent(consent)
         log(.privacyUpdated(setting: consent.privacyStandard.rawValue, value: consent.isChildDirected))
