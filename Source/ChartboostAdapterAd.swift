@@ -184,7 +184,7 @@ private extension ChartboostAdapterAd {
                 mediation: mediation,
                 delegate: nil
             )
-        @unknown default:
+        default:
             throw adapter.error(.loadFailureUnsupportedAdFormat)
         }
     }
