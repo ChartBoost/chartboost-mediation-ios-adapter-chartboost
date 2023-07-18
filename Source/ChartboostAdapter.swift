@@ -122,11 +122,11 @@ final class ChartboostAdapter: PartnerAdapter {
     /// A default implementation is provided that returns `nil`.
     /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Chartboost Mediation's.
     /// If some case cannot be mapped return `nil` to let Chartboost Mediation choose a default error code.
-    func mapSetUpError(_ error: Error) -> ChartboostMediationError.Code? {
-        guard let error = error as? CHBStartError else {
+    func mapSetUpError(_ error: StartError) -> ChartboostMediationError.Code? {
+        guard let errorCode = error.startCode else {
             return nil
         }
-        switch error.code {
+        switch errorCode {
         case .invalidCredentials:
             return .initializationFailureInvalidCredentials
         case .networkFailure:
@@ -144,12 +144,12 @@ final class ChartboostAdapter: PartnerAdapter {
     /// A default implementation is provided that returns `nil`.
     /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Chartboost Mediation's.
     /// If some case cannot be mapped return `nil` to let Chartboost Mediation choose a default error code.
-    func mapLoadError(_ error: Error) -> ChartboostMediationError.Code? {
-        guard let error = error as? CHBCacheError else {
+    func mapLoadError(_ error: CacheError) -> ChartboostMediationError.Code? {
+        guard let errorCode = error.cacheCode else {
             return nil
         }
-        switch error.code {
-        case .internal:
+        switch errorCode {
+        case .internalError:
             return .loadFailureUnknown
         case .internetUnavailable:
             return .loadFailureNoConnectivity
@@ -176,12 +176,12 @@ final class ChartboostAdapter: PartnerAdapter {
     /// A default implementation is provided that returns `nil`.
     /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Chartboost Mediation's.
     /// If some case cannot be mapped return `nil` to let Chartboost Mediation choose a default error code.
-    func mapShowError(_ error: Error) -> ChartboostMediationError.Code? {
-        guard let error = error as? CHBShowError else {
+    func mapShowError(_ error: ShowError) -> ChartboostMediationError.Code? {
+        guard let showError = error.showCode else {
             return nil
         }
-        switch error.code {
-        case .internal:
+        switch showError {
+        case .internalError:
             return .showFailureUnknown
         case .sessionNotStarted:
             return .showFailureNotInitialized
