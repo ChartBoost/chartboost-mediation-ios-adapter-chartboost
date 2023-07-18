@@ -123,10 +123,11 @@ final class ChartboostAdapter: PartnerAdapter {
     /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Chartboost Mediation's.
     /// If some case cannot be mapped return `nil` to let Chartboost Mediation choose a default error code.
     func mapSetUpError(_ error: Error) -> ChartboostMediationError.Code? {
-        guard let error = error as? StartError else {
+        guard let error = error as? StartError,
+              let code = error.startCode else {
             return nil
         }
-        switch error.startCode {
+        switch code {
         case .invalidCredentials:
             return .initializationFailureInvalidCredentials
         case .networkFailure:
@@ -145,10 +146,11 @@ final class ChartboostAdapter: PartnerAdapter {
     /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Chartboost Mediation's.
     /// If some case cannot be mapped return `nil` to let Chartboost Mediation choose a default error code.
     func mapLoadError(_ error: Error) -> ChartboostMediationError.Code? {
-        guard let error = error as? CacheError else {
+        guard let error = error as? CacheError,
+              let code = error.cacheCode else {
             return nil
         }
-        switch error.cacheCode {
+        switch code {
         case .internalError:
             return .loadFailureUnknown
         case .internetUnavailable:
@@ -177,10 +179,11 @@ final class ChartboostAdapter: PartnerAdapter {
     /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Chartboost Mediation's.
     /// If some case cannot be mapped return `nil` to let Chartboost Mediation choose a default error code.
     func mapShowError(_ error: Error) -> ChartboostMediationError.Code? {
-        guard let error = error as? ShowError else {
+        guard let error = error as? ShowError,
+              let code = error.showCode else {
             return nil
         }
-        switch error.showCode {
+        switch code {
         case .internalError:
             return .showFailureUnknown
         case .sessionNotStarted:
