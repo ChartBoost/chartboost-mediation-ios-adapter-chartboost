@@ -99,7 +99,7 @@ final class ChartboostAdapterAd: NSObject, PartnerAd {
 
 extension ChartboostAdapterAd: CHBInterstitialDelegate, CHBRewardedDelegate, CHBBannerDelegate {
     
-    func didCacheAd(_ event: CHBCacheEvent, error partnerError: CHBCacheError?) {
+    func didCacheAd(_ event: CHBCacheEvent, error partnerError: CacheError?) {
         // Report load finished
         if let partnerError = partnerError {
             log(.loadFailed(partnerError))
@@ -115,7 +115,7 @@ extension ChartboostAdapterAd: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
         log(.delegateCallIgnored)
     }
     
-    func didShowAd(_ event: CHBShowEvent, error partnerError: CHBShowError?) {
+    func didShowAd(_ event: CHBShowEvent, error partnerError: ShowError?) {
         // Report show finished
         if let partnerError = partnerError {
             log(.showFailed(partnerError))
@@ -127,7 +127,7 @@ extension ChartboostAdapterAd: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
         showCompletion = nil
     }
     
-    func didClickAd(_ event: CHBClickEvent, error: CHBClickError?) {
+    func didClickAd(_ event: CHBClickEvent, error: ClickError?) {
         // Report click
         log(.didClick(error: error))
         delegate?.didClick(self, details: [:]) ?? log(.delegateUnavailable)
@@ -151,7 +151,7 @@ extension ChartboostAdapterAd: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
         delegate?.didReward(self, details: [:]) ?? log(.delegateUnavailable)
     }
     
-    func didFinishHandlingClick(_ event: CHBClickEvent, error: CHBClickError?) {
+    func didFinishHandlingClick(_ event: CHBClickEvent, error: ClickError?) {
         log(.delegateCallIgnored)
     }
 }

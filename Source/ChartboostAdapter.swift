@@ -16,7 +16,7 @@ final class ChartboostAdapter: PartnerAdapter {
     /// The version of the adapter.
     /// It should have either 5 or 6 digits separated by periods, where the first digit is Chartboost Mediation SDK's major version, the last digit is the adapter's build version, and intermediate digits are the partner SDK's version.
     /// Format: `<Chartboost Mediation major version>.<Partner major version>.<Partner minor version>.<Partner patch version>.<Partner build version>.<Adapter build version>` where `.<Partner build version>` is optional.
-    let adapterVersion = "4.9.3.0.0"
+    let adapterVersion = "4.9.4.0.0"
     
     /// The partner's unique identifier.
     let partnerIdentifier = "chartboost"
@@ -123,10 +123,11 @@ final class ChartboostAdapter: PartnerAdapter {
     /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Chartboost Mediation's.
     /// If some case cannot be mapped return `nil` to let Chartboost Mediation choose a default error code.
     func mapSetUpError(_ error: Error) -> ChartboostMediationError.Code? {
-        guard let error = error as? CHBStartError else {
+        guard let error = error as? StartError,
+              let code = error.startCode else {
             return nil
         }
-        switch error.code {
+        switch code {
         case .invalidCredentials:
             return .initializationFailureInvalidCredentials
         case .networkFailure:
@@ -145,11 +146,12 @@ final class ChartboostAdapter: PartnerAdapter {
     /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Chartboost Mediation's.
     /// If some case cannot be mapped return `nil` to let Chartboost Mediation choose a default error code.
     func mapLoadError(_ error: Error) -> ChartboostMediationError.Code? {
-        guard let error = error as? CHBCacheError else {
+        guard let error = error as? CacheError,
+              let code = error.cacheCode else {
             return nil
         }
-        switch error.code {
-        case .internal:
+        switch code {
+        case .internalError:
             return .loadFailureUnknown
         case .internetUnavailable:
             return .loadFailureNoConnectivity
@@ -177,11 +179,12 @@ final class ChartboostAdapter: PartnerAdapter {
     /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Chartboost Mediation's.
     /// If some case cannot be mapped return `nil` to let Chartboost Mediation choose a default error code.
     func mapShowError(_ error: Error) -> ChartboostMediationError.Code? {
-        guard let error = error as? CHBShowError else {
+        guard let error = error as? ShowError,
+              let code = error.showCode else {
             return nil
         }
-        switch error.code {
-        case .internal:
+        switch code {
+        case .internalError:
             return .showFailureUnknown
         case .sessionNotStarted:
             return .showFailureNotInitialized
