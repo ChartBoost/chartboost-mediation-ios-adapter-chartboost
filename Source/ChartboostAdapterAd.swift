@@ -106,7 +106,16 @@ extension ChartboostAdapterAd: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
             loadCompletion?(.failure(partnerError)) ?? log(.loadResultIgnored)
         } else {
             log(.loadSucceeded)
-            loadCompletion?(.success([:])) ?? log(.loadResultIgnored)
+
+            var partnerDetails: [String: String] = [:]
+            // Only return the size for banners.
+            if request.format == .banner || request.format.rawValue == "adaptive_banner",
+               let loadedSize = Self.fixedBannerSize(for: request.size ?? CHBBannerSizeStandard) {
+                partnerDetails["bannerWidth"] = "\(loadedSize.width)"
+                partnerDetails["bannerHeight"] = "\(loadedSize.height)"
+                partnerDetails["bannerType"] = "0" // Fixed banner
+            }
+            loadCompletion?(.success(partnerDetails)) ?? log(.loadResultIgnored)
         }
         loadCompletion = nil
     }
@@ -178,14 +187,49 @@ private extension ChartboostAdapterAd {
                 delegate: nil
             )
         case .banner:
-            return CHBBanner(
-                size: request.size ?? CHBBannerSizeStandard,    // Chartboost SDK supports the same sizes as Chartboost Mediation
-                location: request.partnerPlacement,
-                mediation: mediation,
-                delegate: nil
-            )
+            return try banner(adapter: adapter, request: request, mediation: mediation)
         default:
-            throw adapter.error(.loadFailureUnsupportedAdFormat)
+            // Not using the `.adaptiveBanner` case directly to maintain backward compatibility with Chartboost Mediation 4.0
+            if request.format.rawValue == "adaptive_banner" {
+                return try banner(adapter: adapter, request: request, mediation: mediation)
+            } else {
+                throw adapter.error(.loadFailureUnsupportedAdFormat)
+            }
         }
+    }
+}
+
+// MARK: - Helpers
+extension ChartboostAdapterAd {
+    private static func banner(
+        adapter: PartnerAdapter,
+        request: PartnerAdLoadRequest,
+        mediation: CHBMediation
+    ) throws -> CHBBanner {
+        // Fail if we cannot fit a fixed size banner in the requested size.
+        guard let size = fixedBannerSize(for: request.size ?? CHBBannerSizeStandard) else {
+            throw adapter.error(.loadFailureInvalidBannerSize)
+        }
+
+        return CHBBanner(
+            size: size,
+            location: request.partnerPlacement,
+            mediation: mediation,
+            delegate: nil
+        )
+    }
+
+    private static func fixedBannerSize(for requestedSize: CGSize) -> CGSize? {
+        let sizes = [IABLeaderboardAdSize, IABMediumAdSize, IABStandardAdSize]
+        // Find the largest size that can fit in the requested size.
+        for size in sizes {
+            // If height is 0, the pub has requested an ad of any height, so only the width matters.
+            if requestedSize.width >= size.width &&
+                (size.height == 0 || requestedSize.height >= size.height) {
+                return size
+            }
+        }
+        // The requested size cannot fit any fixed size banners.
+        return nil
     }
 }
