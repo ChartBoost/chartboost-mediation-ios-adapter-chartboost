@@ -197,6 +197,10 @@ final class ChartboostAdapter: PartnerAdapter {
             return .showFailureAdNotReady
         case .noViewController:
             return .showFailureViewControllerNotFound
+        case .noAdInstance:
+            return .showFailureAdNotFound
+        case .assetsFailure:
+            return .showFailureMediaBroken
         @unknown default:
             return nil
         }
