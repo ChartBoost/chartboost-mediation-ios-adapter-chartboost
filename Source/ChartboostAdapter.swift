@@ -19,7 +19,7 @@ final class ChartboostAdapter: PartnerAdapter {
     let adapterVersion = "4.9.7.0.0"
     
     /// The partner's unique identifier.
-    let partnerIdentifier = "chartboost"
+    let partnerID = "chartboost"
     
     /// The human-friendly partner name.
     let partnerDisplayName = "Chartboost"
@@ -33,7 +33,7 @@ final class ChartboostAdapter: PartnerAdapter {
     /// Does any setup needed before beginning to load ads.
     /// - parameter configuration: Configuration data for the adapter to set up.
     /// - parameter completion: Closure to be performed by the adapter when it's done setting up. It should include an error indicating the cause for failure or `nil` if the operation finished successfully.
-    func setUp(with configuration: PartnerConfiguration, completion: @escaping (Error?) -> Void) {
+    func setUp(with configuration: PartnerConfiguration, completion: @escaping (Result<PartnerDetails, Error>) -> Void) {
         log(.setUpStarted)
         // Get credentials, fail early if they are unavailable
         guard let appID = configuration.appID, let appSignature = configuration.appSignature else {
@@ -57,16 +57,11 @@ final class ChartboostAdapter: PartnerAdapter {
     /// Fetches bidding tokens needed for the partner to participate in an auction.
     /// - parameter request: Information about the ad load request.
     /// - parameter completion: Closure to be performed with the fetched info.
-    func fetchBidderInformation(request: PreBidRequest, completion: @escaping ([String : String]?) -> Void) {
-        // Chartboost does not currently provide any bidding token
+    func fetchBidderInformation(request: PartnerAdPreBidRequest, completion: @escaping (Result<[String : String], Error>) -> Void) {
         log(.fetchBidderInfoStarted(request))
-        if let bidderToken = Chartboost.bidderToken() {
-            log(.fetchBidderInfoSucceeded(request))
-            completion(["buyeruid": bidderToken])
-        } else {
-            log(.fetchBidderInfoFailed(request, error: error(.prebidFailureUnknown)))
-            completion(nil)
-        }
+        let bidderToken = Chartboost.bidderToken()
+        log(.fetchBidderInfoSucceeded(request))
+        completion(.success(bidderToken.map { ["buyeruid": $0] } ?? [:] ))
     }
     
     /// Creates a new ad object in charge of communicating with a single partner SDK ad instance.

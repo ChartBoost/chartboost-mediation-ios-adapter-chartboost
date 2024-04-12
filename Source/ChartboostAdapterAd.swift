@@ -13,6 +13,9 @@ final class ChartboostAdapterAd: NSObject, PartnerAd {
     /// The partner adapter that created this ad.
     let adapter: PartnerAdapter
     
+    /// Extra ad information provided by the partner.
+    var details: PartnerDetails = [:]
+
     /// The ad load request associated to the ad.
     /// It should be the one provided on `PartnerAdapter.makeAd(request:delegate:)`.
     let request: PartnerAdLoadRequest
@@ -25,31 +28,37 @@ final class ChartboostAdapterAd: NSObject, PartnerAd {
     /// Should be nil for full-screen ads.
     var inlineView: UIView? { chartboostAd as? UIView }
     
+    /// The loaded partner ad banner size.
+    /// Should be `nil` for full-screen ads.
+    var bannerSize: PartnerBannerSize?
+
     /// The Chartboost SDK ad.
     private let chartboostAd: CHBAd
         
     /// The completion for the ongoing load operation.
-    private var loadCompletion: ((Result<PartnerEventDetails, Error>) -> Void)?
+    private var loadCompletion: ((Result<PartnerDetails, Error>) -> Void)?
     
     /// The completion for the ongoing show operation.
-    private var showCompletion: ((Result<PartnerEventDetails, Error>) -> Void)?
+    private var showCompletion: ((Result<PartnerDetails, Error>) -> Void)?
     
     init(adapter: PartnerAdapter, request: PartnerAdLoadRequest, delegate: PartnerAdDelegate) throws {
         self.request = request
         self.delegate = delegate
         self.adapter = adapter
         self.chartboostAd = try Self.makeChartboostAd(adapter: adapter, request: request)
+        let chartboostBannerSize = (self.chartboostAd as? CHBBanner)?.size
+        self.bannerSize = chartboostBannerSize.map { PartnerBannerSize(size: $0, type: .fixed) }
     }
     
     /// Loads an ad.
     /// - parameter viewController: The view controller on which the ad will be presented on. Needed on load for some banners.
     /// - parameter completion: Closure to be performed once the ad has been loaded.
-    func load(with viewController: UIViewController?, completion: @escaping (Result<PartnerEventDetails, Error>) -> Void) {
+    func load(with viewController: UIViewController?, completion: @escaping (Result<PartnerDetails, Error>) -> Void) {
         log(.loadStarted)
         
         // Save load completion to execute later on didCacheAd.
         // Banners are expected to show immediately after loading, so we call show() on load for banner ads only
-        if request.format == .banner {
+        if request.format == PartnerAdFormats.banner || request.format == PartnerAdFormats.adaptiveBanner {
             // Banners require a view controller on load to be able to show
             guard let viewController = viewController else {
                 let error = error(.showFailureViewControllerNotFound)
@@ -86,7 +95,7 @@ final class ChartboostAdapterAd: NSObject, PartnerAd {
     /// It will never get called for banner ads. You may leave the implementation blank for that ad format.
     /// - parameter viewController: The view controller on which the ad will be presented on.
     /// - parameter completion: Closure to be performed once the ad has been shown.
-    func show(with viewController: UIViewController, completion: @escaping (Result<PartnerEventDetails, Error>) -> Void) {
+    func show(with viewController: UIViewController, completion: @escaping (Result<PartnerDetails, Error>) -> Void) {
         log(.showStarted)
         
         // Save show completion to execute later on didShowAd
@@ -106,16 +115,7 @@ extension ChartboostAdapterAd: CHBInterstitialDelegate, CHBRewardedDelegate, CHB
             loadCompletion?(.failure(partnerError)) ?? log(.loadResultIgnored)
         } else {
             log(.loadSucceeded)
-
-            var partnerDetails: [String: String] = [:]
-            // Only return the size for banners.
-            if request.format == .banner || request.format.rawValue == "adaptive_banner",
-               let loadedSize = Self.fixedBannerSize(for: request.size ?? CHBBannerSizeStandard) {
-                partnerDetails["bannerWidth"] = "\(loadedSize.width)"
-                partnerDetails["bannerHeight"] = "\(loadedSize.height)"
-                partnerDetails["bannerType"] = "0" // Fixed banner
-            }
-            loadCompletion?(.success(partnerDetails)) ?? log(.loadResultIgnored)
+            loadCompletion?(.success([:])) ?? log(.loadResultIgnored)
         }
         loadCompletion = nil
     }
@@ -174,27 +174,22 @@ private extension ChartboostAdapterAd {
             adapterVersion: adapter.adapterVersion
         )
         switch request.format {
-        case .interstitial:
+        case PartnerAdFormats.interstitial:
             return CHBInterstitial(
                 location: request.partnerPlacement,
                 mediation: mediation,
                 delegate: nil
             )
-        case .rewarded:
+        case PartnerAdFormats.rewarded:
             return CHBRewarded(
                 location: request.partnerPlacement,
                 mediation: mediation,
                 delegate: nil
             )
-        case .banner:
+        case PartnerAdFormats.banner, PartnerAdFormats.adaptiveBanner:
             return try banner(adapter: adapter, request: request, mediation: mediation)
         default:
-            // Not using the `.adaptiveBanner` case directly to maintain backward compatibility with Chartboost Mediation 4.0
-            if request.format.rawValue == "adaptive_banner" {
-                return try banner(adapter: adapter, request: request, mediation: mediation)
-            } else {
-                throw adapter.error(.loadFailureUnsupportedAdFormat)
-            }
+            throw adapter.error(.loadFailureUnsupportedAdFormat)
         }
     }
 }
