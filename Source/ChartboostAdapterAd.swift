@@ -7,6 +7,8 @@ import ChartboostMediationSDK
 import ChartboostSDK
 import Foundation
 
+// some diff
+
 /// Chartboost Mediation Chartboost adapter ad.
 final class ChartboostAdapterAd: NSObject, PartnerAd {
     
