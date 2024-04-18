@@ -34,7 +34,7 @@ final class ChartboostAdapterBannerAd: ChartboostAdapterAd, PartnerBannerAd {
         )
         self.size = PartnerBannerSize(size: size, type: .fixed)
 
-        super.init(adapter: adapter, request: request, delegate: delegate)
+        try super.init(adapter: adapter, request: request, delegate: delegate)
     }
 
     /// Loads an ad.

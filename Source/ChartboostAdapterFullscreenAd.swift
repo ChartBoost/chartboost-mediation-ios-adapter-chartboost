@@ -31,7 +31,7 @@ final class ChartboostAdapterFullscreenAd: ChartboostAdapterAd, PartnerFullscree
             throw adapter.error(.loadFailureUnsupportedAdFormat)
         }
 
-        super.init(adapter: adapter, request: request, delegate: delegate)
+        try super.init(adapter: adapter, request: request, delegate: delegate)
     }
 
     /// Loads an ad.
