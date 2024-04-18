@@ -18,13 +18,13 @@ final class ChartboostAdapterFullscreenAd: ChartboostAdapterAd, PartnerFullscree
         case PartnerAdFormats.interstitial:
             chartboostAd = CHBInterstitial(
                 location: request.partnerPlacement,
-                mediation: mediation,
+                mediation: Self.mediation(for: adapter),
                 delegate: nil
             )
         case PartnerAdFormats.rewarded:
             chartboostAd = CHBRewarded(
                 location: request.partnerPlacement,
-                mediation: mediation,
+                mediation: Self.mediation(for: adapter),
                 delegate: nil
             )
         default:

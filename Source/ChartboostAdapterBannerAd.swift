@@ -29,7 +29,7 @@ final class ChartboostAdapterBannerAd: ChartboostAdapterAd, PartnerBannerAd {
         self.chartboostAd = CHBBanner(
             size: size,
             location: request.partnerPlacement,
-            mediation: mediation,
+            mediation: Self.mediation(for: adapter),
             delegate: nil
         )
         self.size = PartnerBannerSize(size: size, type: .fixed)

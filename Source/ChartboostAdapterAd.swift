@@ -31,19 +31,19 @@ class ChartboostAdapterAd: NSObject {
     
     /// The completion for the ongoing show operation.
     var showCompletion: ((Result<PartnerDetails, Error>) -> Void)?
-    
-    /// The mediation object used to created Chartboost ads.
-    var mediation: CHBMediation {
-        .init(
-            name: "Chartboost",
-            libraryVersion: ChartboostMediation.sdkVersion,
-            adapterVersion: adapter.adapterVersion
-        )
-    }
 
     init(adapter: PartnerAdapter, request: PartnerAdLoadRequest, delegate: PartnerAdDelegate) throws {
         self.request = request
         self.delegate = delegate
         self.adapter = adapter
+    }
+
+    /// The mediation object used to created Chartboost ads.
+    static func mediation(for adapter: PartnerAdapter) -> CHBMediation {
+        .init(
+            name: "Chartboost",
+            libraryVersion: ChartboostMediation.sdkVersion,
+            adapterVersion: adapter.adapterVersion
+        )
     }
 }
