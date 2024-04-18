@@ -8,7 +8,7 @@ import ChartboostSDK
 import Foundation
 
 /// Chartboost Mediation Chartboost adapter fullscreen ad.
-final class ChartboostAdapterFullscreenAd: ChartboostAdapterAd, PartnerFullscreenAd, CHBInterstitialDelegate, CHBRewardedDelegate {
+final class ChartboostAdapterFullscreenAd: ChartboostAdapterAd, PartnerFullscreenAd {
 
     /// The Chartboost SDK ad.
     private let chartboostAd: CHBAd
@@ -68,5 +68,59 @@ final class ChartboostAdapterFullscreenAd: ChartboostAdapterAd, PartnerFullscree
 
         // Show the ad
         chartboostAd.show(from: viewController)
+    }
+}
+
+extension ChartboostAdapterFullscreenAd: CHBInterstitialDelegate, CHBRewardedDelegate {
+    func didCacheAd(_ event: CHBCacheEvent, error partnerError: CacheError?) {
+        // Report load finished
+        if let partnerError = partnerError {
+            log(.loadFailed(partnerError))
+            loadCompletion?(.failure(partnerError)) ?? log(.loadResultIgnored)
+        } else {
+            log(.loadSucceeded)
+            loadCompletion?(.success([:])) ?? log(.loadResultIgnored)
+        }
+        loadCompletion = nil
+    }
+
+    func willShowAd(_ event: CHBShowEvent) {
+        log(.delegateCallIgnored)
+    }
+
+    func didShowAd(_ event: CHBShowEvent, error partnerError: ShowError?) {
+        // Report show finished
+        if let partnerError = partnerError {
+            log(.showFailed(partnerError))
+            showCompletion?(.failure(partnerError)) ?? log(.showResultIgnored)
+        } else {
+            log(.showSucceeded)
+            showCompletion?(.success([:])) ?? log(.showResultIgnored)
+        }
+        showCompletion = nil
+    }
+
+    func didClickAd(_ event: CHBClickEvent, error: ClickError?) {
+        // Report click
+        log(.didClick(error: error))
+        delegate?.didClick(self, details: [:]) ?? log(.delegateUnavailable)
+    }
+
+    func didRecordImpression(_ event: CHBImpressionEvent) {
+        // Report impression tracked
+        log(.didTrackImpression)
+        delegate?.didTrackImpression(self, details: [:]) ?? log(.delegateUnavailable)
+    }
+
+    func didDismissAd(_ event: CHBDismissEvent) {
+        // Report dismiss
+        log(.didDismiss(error: event.error))
+        delegate?.didDismiss(self, details: [:], error: nil) ?? log(.delegateUnavailable)
+    }
+
+    func didEarnReward(_ event: CHBRewardEvent) {
+        // Report reward
+        log(.didReward)
+        delegate?.didReward(self, details: [:]) ?? log(.delegateUnavailable)
     }
 }

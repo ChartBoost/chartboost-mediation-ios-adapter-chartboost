@@ -8,7 +8,7 @@ import ChartboostSDK
 import Foundation
 
 /// Chartboost Mediation Chartboost adapter banner ad.
-final class ChartboostAdapterBannerAd: ChartboostAdapterAd, PartnerBannerAd, CHBBannerDelegate {
+final class ChartboostAdapterBannerAd: ChartboostAdapterAd, PartnerBannerAd {
     /// The partner banner ad view to display.
     var view: UIView? { chartboostAd }
 
@@ -17,6 +17,9 @@ final class ChartboostAdapterBannerAd: ChartboostAdapterAd, PartnerBannerAd, CHB
 
     /// The Chartboost SDK ad.
     private let chartboostAd: CHBBanner
+
+    /// The view controller to show banners on.
+    private weak var viewController: UIViewController?
 
     override init(adapter: PartnerAdapter, request: PartnerAdLoadRequest, delegate: PartnerAdDelegate) throws {
         // Fail if we cannot fit a fixed size banner in the requested size.
@@ -39,22 +42,11 @@ final class ChartboostAdapterBannerAd: ChartboostAdapterAd, PartnerBannerAd, CHB
     /// - parameter completion: Closure to be performed once the ad has been loaded.
     func load(with viewController: UIViewController?, completion: @escaping (Result<PartnerDetails, Error>) -> Void) {
         log(.loadStarted)
+        // Save view controller to show the banner later
+        self.viewController = viewController
 
-        // Banners require a view controller on load to be able to show
-        guard let viewController = viewController else {
-            let error = error(.showFailureViewControllerNotFound)
-            log(.loadFailed(error))
-            completion(.failure(error))
-            return
-        }
-        // Save load completion to execute later on didCacheAd.
-        // Chartbosot Mediation expects banners to "show" immediately after being loaded and layed out, so we call show() on load.
-        loadCompletion = { [weak self] result in
-            if case .success = result {
-                self?.chartboostAd.show(from: viewController)
-            }
-            completion(result)
-        }
+        // Save completion to be executed later
+        loadCompletion = completion
 
         // Set delegate
         chartboostAd.delegate = self
@@ -84,5 +76,62 @@ final class ChartboostAdapterBannerAd: ChartboostAdapterAd, PartnerBannerAd, CHB
         }
         // The requested size cannot fit any fixed size banners.
         return nil
+    }
+}
+
+extension ChartboostAdapterBannerAd: CHBBannerDelegate {
+    func didCacheAd(_ event: CHBCacheEvent, error partnerError: CacheError?) {
+        // Report load finished
+        if let partnerError = partnerError {
+            // Partner load failure
+            log(.loadFailed(partnerError))
+            loadCompletion?(.failure(partnerError)) ?? log(.loadResultIgnored)
+        } else if let viewController {
+            // Success
+            log(.loadSucceeded)
+
+            // Chartboost Mediation expects banners to "show" immediately after being loaded and layed out, so we call show() on load.
+            chartboostAd.show(from: viewController)
+
+            loadCompletion?(.success([:])) ?? log(.loadResultIgnored)
+        } else {
+            // Banners require a view controller on load to be able to show
+            let error = error(.showFailureViewControllerNotFound)
+            log(.loadFailed(error))
+            loadCompletion?(.failure(error)) ?? log(.loadResultIgnored)
+        }
+        loadCompletion = nil
+    }
+
+    func willShowAd(_ event: CHBShowEvent) {
+        log(.delegateCallIgnored)
+    }
+
+    func didShowAd(_ event: CHBShowEvent, error partnerError: ShowError?) {
+        // Report show finished
+        if let partnerError = partnerError {
+            log(.showFailed(partnerError))
+            showCompletion?(.failure(partnerError)) ?? log(.showResultIgnored)
+        } else {
+            log(.showSucceeded)
+            showCompletion?(.success([:])) ?? log(.showResultIgnored)
+        }
+        showCompletion = nil
+    }
+
+    func didClickAd(_ event: CHBClickEvent, error: ClickError?) {
+        // Report click
+        log(.didClick(error: error))
+        delegate?.didClick(self, details: [:]) ?? log(.delegateUnavailable)
+    }
+
+    func didRecordImpression(_ event: CHBImpressionEvent) {
+        // Report impression tracked
+        log(.didTrackImpression)
+        delegate?.didTrackImpression(self, details: [:]) ?? log(.delegateUnavailable)
+    }
+
+    func didFinishHandlingClick(_ event: CHBClickEvent, error: ClickError?) {
+        log(.delegateCallIgnored)
     }
 }
