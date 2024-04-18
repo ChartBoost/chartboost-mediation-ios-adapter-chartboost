@@ -8,7 +8,7 @@ import ChartboostSDK
 import Foundation
 
 /// Chartboost Mediation Chartboost adapter fullscreen ad.
-final class ChartboostAdapterFullscreenAd: ChartboostAdapterAd, PartnerFullscreenAd {
+final class ChartboostAdapterFullscreenAd: ChartboostAdapterAd, PartnerFullscreenAd, CHBInterstitialDelegate, CHBRewardedDelegate {
 
     /// The Chartboost SDK ad.
     private let chartboostAd: CHBAd

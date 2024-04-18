@@ -8,7 +8,7 @@ import ChartboostSDK
 import Foundation
 
 /// Base class for Chartboost Mediation Chartboost adapter ads.
-final class ChartboostAdapterAd: NSObject {
+class ChartboostAdapterAd: NSObject {
     
     /// The partner adapter that created this ad.
     let adapter: PartnerAdapter
@@ -48,8 +48,9 @@ final class ChartboostAdapterAd: NSObject {
     }
 }
 
-extension ChartboostAdapterAd: CHBInterstitialDelegate, CHBRewardedDelegate, CHBBannerDelegate {
-    
+// Conformance to Chartboost ad delegate protocols
+extension ChartboostAdapterAd where Self: PartnerAd {
+
     func didCacheAd(_ event: CHBCacheEvent, error partnerError: CacheError?) {
         // Report load finished
         if let partnerError = partnerError {

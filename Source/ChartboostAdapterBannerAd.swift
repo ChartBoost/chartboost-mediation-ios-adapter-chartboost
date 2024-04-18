@@ -8,7 +8,7 @@ import ChartboostSDK
 import Foundation
 
 /// Chartboost Mediation Chartboost adapter banner ad.
-final class ChartboostAdapterBannerAd: ChartboostAdapterAd, PartnerBannerAd {
+final class ChartboostAdapterBannerAd: ChartboostAdapterAd, PartnerBannerAd, CHBBannerDelegate {
     /// The partner banner ad view to display.
     var view: UIView? { chartboostAd }
 
