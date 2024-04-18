@@ -27,10 +27,10 @@ class ChartboostAdapterAd: NSObject {
     weak var delegate: PartnerAdDelegate?
     
     /// The completion for the ongoing load operation.
-    private var loadCompletion: ((Result<PartnerDetails, Error>) -> Void)?
+    var loadCompletion: ((Result<PartnerDetails, Error>) -> Void)?
     
     /// The completion for the ongoing show operation.
-    private var showCompletion: ((Result<PartnerDetails, Error>) -> Void)?
+    var showCompletion: ((Result<PartnerDetails, Error>) -> Void)?
     
     /// The mediation object used to created Chartboost ads.
     var mediation: CHBMediation {
