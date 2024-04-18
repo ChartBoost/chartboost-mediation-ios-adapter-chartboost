@@ -58,7 +58,7 @@ final class ChartboostAdapterAd: NSObject, PartnerAd {
         
         // Save load completion to execute later on didCacheAd.
         // Banners are expected to show immediately after loading, so we call show() on load for banner ads only
-        if request.format == PartnerAdFormats.banner || request.format == PartnerAdFormats.adaptiveBanner {
+        if request.format == PartnerAdFormats.banner {
             // Banners require a view controller on load to be able to show
             guard let viewController = viewController else {
                 let error = error(.showFailureViewControllerNotFound)
@@ -186,7 +186,7 @@ private extension ChartboostAdapterAd {
                 mediation: mediation,
                 delegate: nil
             )
-        case PartnerAdFormats.banner, PartnerAdFormats.adaptiveBanner:
+        case PartnerAdFormats.banner:
             return try banner(adapter: adapter, request: request, mediation: mediation)
         default:
             throw adapter.error(.loadFailureUnsupportedAdFormat)
@@ -202,7 +202,7 @@ extension ChartboostAdapterAd {
         mediation: CHBMediation
     ) throws -> CHBBanner {
         // Fail if we cannot fit a fixed size banner in the requested size.
-        guard let size = fixedBannerSize(for: request.size ?? CHBBannerSizeStandard) else {
+        guard let size = fixedBannerSize(for: request.bannerSize) else {
             throw adapter.error(.loadFailureInvalidBannerSize)
         }
 
@@ -214,13 +214,16 @@ extension ChartboostAdapterAd {
         )
     }
 
-    private static func fixedBannerSize(for requestedSize: CGSize) -> CGSize? {
+    private static func fixedBannerSize(for requestedSize: BannerSize?) -> CGSize? {
+        guard let requestedSize else {
+            return IABStandardAdSize
+        }
         let sizes = [IABLeaderboardAdSize, IABMediumAdSize, IABStandardAdSize]
         // Find the largest size that can fit in the requested size.
         for size in sizes {
             // If height is 0, the pub has requested an ad of any height, so only the width matters.
-            if requestedSize.width >= size.width &&
-                (size.height == 0 || requestedSize.height >= size.height) {
+            if requestedSize.size.width >= size.width &&
+                (size.height == 0 || requestedSize.size.height >= size.height) {
                 return size
             }
         }
