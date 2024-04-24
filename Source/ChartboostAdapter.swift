@@ -42,6 +42,11 @@ final class ChartboostAdapter: PartnerAdapter {
             completion(.failure(error))
             return
         }
+
+        // Apply initial consents
+        setConsents(configuration.consents, modifiedKeys: Set(configuration.consents.keys))
+        setIsUserUnderage(configuration.isUserUnderage)
+
         // Start Chartboost
         Chartboost.start(withAppID: appID, appSignature: appSignature) { [self] error in
             if let error = error {
