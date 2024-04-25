@@ -12,4 +12,4 @@ jobs:
   release-adapter:
     runs-on: macos-latest
     steps:
-      - uses: chartboost/chartboost-mediation-ios-actions/release-adapter@v1
+      - uses: chartboost/chartboost-mediation-ios-actions/release-adapter@v2
