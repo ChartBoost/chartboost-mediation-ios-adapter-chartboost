@@ -11,19 +11,27 @@ import Foundation
 final class ChartboostAdapter: PartnerAdapter {
     
     /// The version of the partner SDK.
-    let partnerSDKVersion = Chartboost.getSDKVersion()
-    
+    var partnerSDKVersion: String {
+        ChartboostAdapterConfiguration.partnerSDKVersion
+    }
+
     /// The version of the adapter.
     /// It should have either 5 or 6 digits separated by periods, where the first digit is Chartboost Mediation SDK's major version, the last digit is the adapter's build version, and intermediate digits are the partner SDK's version.
     /// Format: `<Chartboost Mediation major version>.<Partner major version>.<Partner minor version>.<Partner patch version>.<Partner build version>.<Adapter build version>` where `.<Partner build version>` is optional.
-    let adapterVersion = "4.9.7.0.0"
-    
+    var adapterVersion: String {
+        ChartboostAdapterConfiguration.adapterVersion
+    }
+
     /// The partner's unique identifier.
-    let partnerID = "chartboost"
-    
+    var partnerID: String {
+        ChartboostAdapterConfiguration.partnerID
+    }
+
     /// The human-friendly partner name.
-    let partnerDisplayName = "Chartboost"
-    
+    var partnerDisplayName: String {
+        ChartboostAdapterConfiguration.partnerDisplayName
+    }
+
     /// The designated initializer for the adapter.
     /// Chartboost Mediation SDK will use this constructor to create instances of conforming types.
     /// - parameter storage: An object that exposes storage managed by the Chartboost Mediation SDK to the adapter.
