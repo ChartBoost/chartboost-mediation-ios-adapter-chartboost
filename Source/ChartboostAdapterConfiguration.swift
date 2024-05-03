@@ -3,11 +3,12 @@
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
+import ChartboostMediationSDK
 import ChartboostSDK
 import Foundation
 
 /// A list of externally configurable properties pertaining to the partner SDK that can be retrieved and set by publishers.
-@objc public class ChartboostAdapterConfiguration: NSObject {
+@objc public class ChartboostAdapterConfiguration: NSObject, PartnerAdapterConfiguration {
 
     /// The version of the partner SDK.
     @objc public static var partnerSDKVersion: String {

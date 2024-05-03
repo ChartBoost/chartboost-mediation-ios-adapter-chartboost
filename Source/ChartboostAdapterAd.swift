@@ -43,7 +43,7 @@ class ChartboostAdapterAd: NSObject {
         .init(
             name: "Chartboost",
             libraryVersion: ChartboostMediation.sdkVersion,
-            adapterVersion: adapter.adapterVersion
+            adapterVersion: adapter.configuration.adapterVersion
         )
     }
 }
