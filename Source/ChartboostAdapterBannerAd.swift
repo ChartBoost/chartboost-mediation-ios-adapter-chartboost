@@ -23,16 +23,17 @@ final class ChartboostAdapterBannerAd: ChartboostAdapterAd, PartnerBannerAd {
 
     override init(adapter: PartnerAdapter, request: PartnerAdLoadRequest, delegate: PartnerAdDelegate) throws {
         // Fail if we cannot fit a fixed size banner in the requested size.
-        guard let size = Self.fixedBannerSize(for: request.bannerSize) else {
+        guard let requestedSize = request.bannerSize,
+              let loadedSize = BannerSize.largestStandardFixedSizeThatFits(in: requestedSize)?.size else {
             throw adapter.error(.loadFailureInvalidBannerSize)
         }
         self.chartboostAd = CHBBanner(
-            size: size,
+            size: loadedSize,
             location: request.partnerPlacement,
             mediation: Self.mediation(for: adapter),
             delegate: nil
         )
-        self.size = PartnerBannerSize(size: size, type: .fixed)
+        self.size = PartnerBannerSize(size: loadedSize, type: .fixed)
 
         try super.init(adapter: adapter, request: request, delegate: delegate)
     }
@@ -59,23 +60,6 @@ final class ChartboostAdapterBannerAd: ChartboostAdapterAd, PartnerBannerAd {
             // Non-programmatic load
             chartboostAd.cache()
         }
-    }
-
-    private static func fixedBannerSize(for requestedSize: BannerSize?) -> CGSize? {
-        guard let requestedSize else {
-            return IABStandardAdSize
-        }
-        let sizes = [IABLeaderboardAdSize, IABMediumAdSize, IABStandardAdSize]
-        // Find the largest size that can fit in the requested size.
-        for size in sizes {
-            // If height is 0, the pub has requested an ad of any height, so only the width matters.
-            if requestedSize.size.width >= size.width &&
-                (size.height == 0 || requestedSize.size.height >= size.height) {
-                return size
-            }
-        }
-        // The requested size cannot fit any fixed size banners.
-        return nil
     }
 }
 
