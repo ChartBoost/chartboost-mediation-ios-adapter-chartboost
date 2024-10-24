@@ -19,11 +19,20 @@ import Foundation
     /// last digit is the adapter's build version, and intermediate digits are the partner SDK's version.
     /// Format: `<Chartboost Mediation major version>.<Partner major version>.<Partner minor version>.<Partner patch version>.
     /// <Partner build version>.<Adapter build version>` where `.<Partner build version>` is optional.
-    @objc public static let adapterVersion = "5.9.7.0.0"
+    @objc public static let adapterVersion = "5.9.8.0.0"
 
     /// The partner's unique identifier.
     @objc public static let partnerID = "chartboost"
 
     /// The human-friendly partner name.
     @objc public static let partnerDisplayName = "Chartboost"
+
+    /// Flag that can optionally be set to enable the partner's verbose logging.
+    /// Disabled by default.
+    @objc public static var verboseLogging = false {
+        didSet {
+            Chartboost.setLoggingLevel(verboseLogging ? .verbose : .off)
+            log("Verbose logging set to \(verboseLogging)")
+        }
+    }
 }
