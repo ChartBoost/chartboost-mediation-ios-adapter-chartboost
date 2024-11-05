@@ -4,6 +4,7 @@ Note the first digit of every adapter version corresponds to the major version o
 Adapters are compatible with any Chartboost Mediation SDK version within that major version.
 
 ### 4.9.8.0.1
+- Fixes bug that prevented adaptive banners from loading.
 - This version of the adapter has been certified with ChartboostSDK 9.8.0.
 
 ### 4.9.8.0.0

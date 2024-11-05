@@ -1,0 +1,46 @@
+diff --git a/Source/ChartboostAdapterAd.swift b/Source/ChartboostAdapterAd.swift
+index 43ab41a..0c1db5e 100644
+--- a/Source/ChartboostAdapterAd.swift
++++ b/Source/ChartboostAdapterAd.swift
+@@ -47,9 +47,9 @@ final class ChartboostAdapterAd: NSObject, PartnerAd {
+     func load(with viewController: UIViewController?, completion: @escaping (Result<PartnerEventDetails, Error>) -> Void) {
+         log(.loadStarted)
+         
+-        // Save load completion to execute later on didCacheAd.
+-        // Banners are expected to show immediately after loading, so we call show() on load for banner ads only
+-        if request.format == .banner {
++        // Identical banner code is needed in two places because of how the switch statement is structured,
++        // so wrap it in a local functon
++        func loadBanner() {
+             // Banners require a view controller on load to be able to show
+             guard let viewController = viewController else {
+                 let error = error(.showFailureViewControllerNotFound)
+@@ -64,11 +64,25 @@ final class ChartboostAdapterAd: NSObject, PartnerAd {
+                 }
+                 completion(result)
+             }
+-        } else {
+-            // Interstitial and rewarded ads don't do anything extra
++        }
++
++        switch request.format {
++        case .banner:
++            loadBanner()
++        case .interstitial, .rewarded:
++            // Interstitial and rewarded ads just need to save the completion so it can be called when load finishes.
+             loadCompletion = completion
++        default:
++            // Not using the `.rewardedInterstitial` or `.adaptiveBanner` cases directly to maintain backward compatibility with Chartboost Mediation 4.0
++            if request.format.rawValue == "rewarded_interstitial" {
++                loadCompletion = completion
++            } else if request.format.rawValue == "adaptive_banner" {
++                loadBanner()
++            } else {
++                log(.loadFailed(error(.loadFailureUnsupportedAdFormat)))
++            }
+         }
+-        
++
+         // Set delegate
+         chartboostAd.delegate = self
+         
