@@ -8,8 +8,7 @@ import ChartboostSDK
 import Foundation
 
 /// Chartboost Mediation Chartboost adapter.
-final class ChartboostAdapter: PartnerAdapter {
-    
+final class ChartboostAdapter: PartnerAdapter {    
     /// The version of the partner SDK.
     let partnerSDKVersion = Chartboost.getSDKVersion()
     
@@ -23,100 +22,138 @@ final class ChartboostAdapter: PartnerAdapter {
     
     /// The human-friendly partner name.
     let partnerDisplayName = "Chartboost"
-    
-    /// The designated initializer for the adapter.
+
+  /// The designated initializer for the adapter.
     /// Chartboost Mediation SDK will use this constructor to create instances of conforming types.
     /// - parameter storage: An object that exposes storage managed by the Chartboost Mediation SDK to the adapter.
     /// It includes a list of created `PartnerAd` instances. You may ignore this parameter if you don't need it.
     init(storage: PartnerAdapterStorage) { }
-    
+
     /// Does any setup needed before beginning to load ads.
     /// - parameter configuration: Configuration data for the adapter to set up.
-    /// - parameter completion: Closure to be performed by the adapter when it's done setting up. It should include an error indicating the cause for failure or `nil` if the operation finished successfully.
-    func setUp(with configuration: PartnerConfiguration, completion: @escaping (Error?) -> Void) {
+    /// - parameter completion: Closure to be performed by the adapter when it's done setting up. It should include an error indicating
+    /// the cause for failure or `nil` if the operation finished successfully.
+    func setUp(with configuration: PartnerConfiguration, completion: @escaping (Result<PartnerDetails, Error>) -> Void) {
         log(.setUpStarted)
         // Get credentials, fail early if they are unavailable
         guard let appID = configuration.appID, let appSignature = configuration.appSignature else {
-            let error = error(.initializationFailureInvalidCredentials, description: "Missing \(configuration.appID == nil ? String.appIDKey : String.appSignatureKey)")
+            let error = error(
+                .initializationFailureInvalidCredentials,
+                description: "Missing \(configuration.appID == nil ? String.appIDKey : String.appSignatureKey)"
+            )
             log(.setUpFailed(error))
-            completion(error)
+            completion(.failure(error))
             return
         }
+
+        // Apply initial consents
+        setConsents(configuration.consents, modifiedKeys: Set(configuration.consents.keys))
+        setIsUserUnderage(configuration.isUserUnderage)
+
         // Start Chartboost
         Chartboost.start(withAppID: appID, appSignature: appSignature) { [self] error in
-            if let error = error {
+            if let error {
                 log(.setUpFailed(error))
-                completion(error)
+                completion(.failure(error))
             } else {
                 log(.setUpSucceded)
-                completion(nil)
+                completion(.success([:]))
             }
         }
     }
-    
+
     /// Fetches bidding tokens needed for the partner to participate in an auction.
     /// - parameter request: Information about the ad load request.
     /// - parameter completion: Closure to be performed with the fetched info.
-    func fetchBidderInformation(request: PreBidRequest, completion: @escaping ([String : String]?) -> Void) {
-        // Chartboost does not currently provide any bidding token
+    func fetchBidderInformation(request: PartnerAdPreBidRequest, completion: @escaping (Result<[String: String], Error>) -> Void) {
         log(.fetchBidderInfoStarted(request))
-        if let bidderToken = Chartboost.bidderToken() {
-            log(.fetchBidderInfoSucceeded(request))
-            completion(["buyeruid": bidderToken])
-        } else {
-            log(.fetchBidderInfoFailed(request, error: error(.prebidFailureUnknown)))
-            completion(nil)
-        }
+        let bidderToken = Chartboost.bidderToken()
+        log(.fetchBidderInfoSucceeded(request))
+        completion(.success(bidderToken.map { ["buyeruid": $0] } ?? [:] ))
     }
-    
+
+    /// Creates a new banner ad object in charge of communicating with a single partner SDK ad instance.
+    /// Chartboost Mediation SDK calls this method to create a new ad for each new load request. Ad instances are never reused.
+    /// Chartboost Mediation SDK takes care of storing and disposing of ad instances so you don't need to.
+    /// ``PartnerAd/invalidate()`` is called on ads before disposing of them in case partners need to perform any custom logic before the
+    /// object gets destroyed.
+    /// If, for some reason, a new ad cannot be provided, an error should be thrown.
+    /// Chartboost Mediation SDK will always call this method from the main thread.
+    /// - parameter request: Information about the ad load request.
+    /// - parameter delegate: The delegate that will receive ad life-cycle notifications.
+    func makeBannerAd(request: PartnerAdLoadRequest, delegate: PartnerAdDelegate) throws -> PartnerBannerAd {
+        // This partner supports multiple loads for the same partner placement.
+        try ChartboostAdapterBannerAd(adapter: self, request: request, delegate: delegate)
+    }
+
     /// Creates a new ad object in charge of communicating with a single partner SDK ad instance.
     /// Chartboost Mediation SDK calls this method to create a new ad for each new load request. Ad instances are never reused.
     /// Chartboost Mediation SDK takes care of storing and disposing of ad instances so you don't need to.
-    /// `invalidate()` is called on ads before disposing of them in case partners need to perform any custom logic before the object gets destroyed.
+    /// ``PartnerAd/invalidate()`` is called on ads before disposing of them in case partners need to perform any custom logic before the
+    /// object gets destroyed.
     /// If, for some reason, a new ad cannot be provided, an error should be thrown.
     /// - parameter request: Information about the ad load request.
     /// - parameter delegate: The delegate that will receive ad life-cycle notifications.
-    func makeAd(request: PartnerAdLoadRequest, delegate: PartnerAdDelegate) throws -> PartnerAd {
+    func makeFullscreenAd(request: PartnerAdLoadRequest, delegate: PartnerAdDelegate) throws -> PartnerFullscreenAd {
         // This partner supports multiple loads for the same partner placement.
-        try ChartboostAdapterAd(adapter: self, request: request, delegate: delegate)
+        try ChartboostAdapterFullscreenAd(adapter: self, request: request, delegate: delegate)
     }
-    
-    /// Indicates if GDPR applies or not and the user's GDPR consent status.
-    /// - parameter applies: `true` if GDPR applies, `false` if not, `nil` if the publisher has not provided this information.
-    /// - parameter status: One of the `GDPRConsentStatus` values depending on the user's preference.
-    func setGDPR(applies: Bool?, status: GDPRConsentStatus) {
-        // See https://answers.chartboost.com/en-us/child_article/ios-privacy-methods
-        if applies == true {
-            let consent = CHBDataUseConsent.GDPR(status == .granted ? .behavioral : .nonBehavioral)
-            Chartboost.addDataUseConsent(consent)
-            log(.privacyUpdated(setting: consent.privacyStandard.rawValue, value: consent.consent.rawValue))
-        } else {
-            Chartboost.clearDataUseConsent(for: .GDPR)
-            log(.privacyUpdated(setting: CHBPrivacyStandard.GDPR.rawValue, value: nil))
+
+    /// Indicates that the user consent has changed.
+    /// - parameter consents: The new consents value, including both modified and unmodified consents.
+    /// - parameter modifiedKeys: A set containing all the keys that changed.
+    func setConsents(_ consents: [ConsentKey: ConsentValue], modifiedKeys: Set<ConsentKey>) {
+        // Set GDPR
+        if modifiedKeys.contains(configuration.partnerID) || modifiedKeys.contains(ConsentKeys.gdprConsentGiven) {
+            let consent = consents[configuration.partnerID] ?? consents[ConsentKeys.gdprConsentGiven]
+            switch consent {
+            case ConsentValues.granted, ConsentValues.denied:
+                let consent = CHBDataUseConsent.GDPR(consent == ConsentValues.granted ? .behavioral : .nonBehavioral)
+                Chartboost.addDataUseConsent(consent)
+                log(.privacyUpdated(setting: consent.privacyStandard.rawValue, value: consent.consent.rawValue))
+            default:
+                Chartboost.clearDataUseConsent(for: .GDPR)
+                log(.privacyUpdated(setting: CHBPrivacyStandard.GDPR.rawValue, value: nil))
+            }
+        }
+        // Set US privacy string
+        if modifiedKeys.contains(ConsentKeys.usp) {
+            // See https://answers.chartboost.com/en-us/child_article/ios-privacy-methods
+            if let privacyString = consents[ConsentKeys.usp] {
+                let consent = CHBDataUseConsent.Custom(privacyStandard: .CCPA, consent: privacyString)
+                Chartboost.addDataUseConsent(consent)
+                log(.privacyUpdated(setting: consent.privacyStandard.rawValue, value: consent.consent))
+            } else {
+                Chartboost.clearDataUseConsent(for: .CCPA)
+                log(.privacyUpdated(setting: CHBPrivacyStandard.CCPA.rawValue, value: nil))
+            }
+        }
+
+        // CCPA consent (only if USP not available, since they are exclusive options for Chartboost)
+        if modifiedKeys.contains(ConsentKeys.ccpaOptIn) && consents[ConsentKeys.usp] == nil {
+            let consent = consents[ConsentKeys.ccpaOptIn]
+            switch consent {
+            case ConsentValues.granted, ConsentValues.denied:
+                let consent = CHBDataUseConsent.CCPA(consent == ConsentValues.granted ? .optInSale : .optOutSale)
+                Chartboost.addDataUseConsent(consent)
+                log(.privacyUpdated(setting: consent.privacyStandard.rawValue, value: consent.consent.rawValue))
+            default:
+                Chartboost.clearDataUseConsent(for: .CCPA)
+                log(.privacyUpdated(setting: CHBPrivacyStandard.CCPA.rawValue, value: nil))
+            }
         }
     }
-    
-    /// Indicates the CCPA status both as a boolean and as an IAB US privacy string.
-    /// - parameter hasGivenConsent: A boolean indicating if the user has given consent.
-    /// - parameter privacyString: An IAB-compliant string indicating the CCPA status.
-    func setCCPA(hasGivenConsent: Bool, privacyString: String) {
-        // Set US privacy string
-        // See https://answers.chartboost.com/en-us/child_article/ios-privacy-methods
-        let consent = CHBDataUseConsent.Custom(privacyStandard: .CCPA, consent: privacyString)
-        Chartboost.addDataUseConsent(consent)
-        log(.privacyUpdated(setting: consent.privacyStandard.rawValue, value: consent.consent))
-    }
-    
-    /// Indicates if the user is subject to COPPA or not.
-    /// - parameter isChildDirected: `true` if the user is subject to COPPA, `false` otherwise.
-    func setCOPPA(isChildDirected: Bool) {
+
+    /// Indicates that the user is underage signal has changed.
+    /// - parameter isUserUnderage: `true` if the user is underage as determined by the publisher, `false` otherwise.
+    func setIsUserUnderage(_ isUserUnderage: Bool) {
         // Set Chartboost COPPA consent
         // See https://answers.chartboost.com/en-us/child_article/ios-privacy-methods
-        let consent = CHBDataUseConsent.COPPA(isChildDirected: isChildDirected)
+        let consent = CHBDataUseConsent.COPPA(isChildDirected: isUserUnderage)
         Chartboost.addDataUseConsent(consent)
         log(.privacyUpdated(setting: consent.privacyStandard.rawValue, value: consent.isChildDirected))
     }
-    
+
     /// Maps a partner setup error to a Chartboost Mediation error code.
     /// Chartboost Mediation SDK calls this method when a setup completion is called with a partner error.
     ///
@@ -139,7 +176,7 @@ final class ChartboostAdapter: PartnerAdapter {
             return nil
         }
     }
-    
+
     /// Maps a partner load error to a Chartboost Mediation error code.
     /// Chartboost Mediation SDK calls this method when a load completion is called with a partner error.
     ///
@@ -172,7 +209,7 @@ final class ChartboostAdapter: PartnerAdapter {
             return nil
         }
     }
-    
+
     /// Maps a partner show error to a Chartboost Mediation error code.
     /// Chartboost Mediation SDK calls this method when a show completion is called with a partner error.
     ///
@@ -208,14 +245,14 @@ final class ChartboostAdapter: PartnerAdapter {
 }
 
 /// Convenience extension to access Chartboost credentials from the configuration.
-private extension PartnerConfiguration {
-    var appID: String? { credentials[.appIDKey] as? String }
-    var appSignature: String? { credentials[.appSignatureKey] as? String }
+extension PartnerConfiguration {
+    fileprivate var appID: String? { credentials[.appIDKey] as? String }
+    fileprivate var appSignature: String? { credentials[.appSignatureKey] as? String }
 }
 
-private extension String {
+extension String {
     /// Chartboost app ID credentials key
-    static let appIDKey = "app_id"
+    fileprivate static let appIDKey = "app_id"
     /// Chartboost app signature credentials key
-    static let appSignatureKey = "app_signature"
+    fileprivate static let appSignatureKey = "app_signature"
 }
