@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Chartboost, Inc.
+// Copyright 2022-2025 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -228,6 +228,8 @@ final class ChartboostAdapter: PartnerAdapter {
             return .showFailureAdNotFound
         case .assetsFailure:
             return .showFailureMediaBroken
+        case .adAlreadyVisible:
+            return .showFailureShowInProgress
         @unknown default:
             return nil
         }
