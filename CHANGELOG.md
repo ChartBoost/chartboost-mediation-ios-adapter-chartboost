@@ -11,6 +11,10 @@ All official releases can be found on this repository's [releases page](https://
 
 ## Mediation 5
 
+### 5.9.9.0.1
+- Added hook to Monetization's new didExpireAd callback.
+- This version of the adapter has been certified with ChartboostSDK 9.9.0.
+
 ### 5.9.9.0.0
 - This version of the adapter has been certified with ChartboostSDK 9.9.0.
 

@@ -118,4 +118,9 @@ extension ChartboostAdapterBannerAd: CHBBannerDelegate {
     func didFinishHandlingClick(_ event: CHBClickEvent, error: ClickError?) {
         log(.delegateCallIgnored)
     }
+
+    func didExpireAd(_ event: CHBExpirationEvent) {
+        log(.didExpire)
+        delegate?.didExpire(self) ?? log(.delegateUnavailable)
+    }
 }

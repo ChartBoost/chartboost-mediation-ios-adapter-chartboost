@@ -122,4 +122,9 @@ extension ChartboostAdapterFullscreenAd: CHBInterstitialDelegate, CHBRewardedDel
         log(.didReward)
         delegate?.didReward(self) ?? log(.delegateUnavailable)
     }
+
+    func didExpireAd(_ event: CHBExpirationEvent) {
+        log(.didExpire)
+        delegate?.didExpire(self) ?? log(.delegateUnavailable)
+    }
 }
