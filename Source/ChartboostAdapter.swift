@@ -156,12 +156,21 @@ final class ChartboostAdapter: PartnerAdapter {
             return nil
         }
         switch code {
+        case .internalError:
+            return .initializationFailureInternalError
         case .invalidCredentials:
             return .initializationFailureInvalidCredentials
+        case .invalidConfiguration:
+            return .initializationFailureInvalidAppConfig
+        case .publisherDisabled:
+            // TODO: In Mediation 6.0.0 release, return `.initializationFailureInitializationDisabled` introduced in 5.1.0
+            return .initializationFailureInternalError
         case .networkFailure:
             return .initializationFailureNetworkingError
         case .serverError:
             return .initializationFailureServerError
+        case .unsupportedOSVersion:
+            return .initializationFailureOSVersionNotSupported
         @unknown default:
             return nil
         }
@@ -179,22 +188,30 @@ final class ChartboostAdapter: PartnerAdapter {
             return nil
         }
         switch code {
+        case .assetDownloadFailure:
+            return .loadFailureNetworkingError
+        case .assetUnavailable:
+            return .loadFailureUnknown
         case .internalError:
             return .loadFailureUnknown
         case .internetUnavailable:
             return .loadFailureNoConnectivity
+        case .invalidADM:
+            return .loadFailureInvalidAdMarkup
         case .networkFailure:
             return .loadFailureNetworkingError
         case .noAdFound:
             return .loadFailureNoFill
-        case .sessionNotStarted:
-            return .loadFailurePartnerNotInitialized
-        case .assetDownloadFailure:
-            return .loadFailureNetworkingError
         case .publisherDisabled:
             return .loadFailureAborted
         case .serverError:
             return .loadFailureServerError
+        case .sessionNotStarted:
+            return .loadFailurePartnerNotInitialized
+        case .vastError:
+            return .loadFailureUnknown
+        case .webViewFailed:
+            return .loadFailureUnknown
         @unknown default:
             return nil
         }
@@ -212,24 +229,26 @@ final class ChartboostAdapter: PartnerAdapter {
             return nil
         }
         switch code {
+        case .adAlreadyVisible:
+            return .showFailureShowInProgress
+        case .assetsFailure:
+            return .showFailureMediaBroken
         case .internalError:
             return .showFailureUnknown
-        case .sessionNotStarted:
-            return .showFailureNotInitialized
         case .internetUnavailable:
             return .showFailureNoConnectivity
-        case .presentationFailure:
-            return .showFailureUnknown
+        case .noAdInstance:
+            return .showFailureAdNotFound
         case .noCachedAd:
             return .showFailureAdNotReady
         case .noViewController:
             return .showFailureViewControllerNotFound
-        case .noAdInstance:
+        case .presentationFailure:
+            return .showFailureUnknown
+        case .publisherDisabled:
             return .showFailureAdNotFound
-        case .assetsFailure:
-            return .showFailureMediaBroken
-        case .adAlreadyVisible:
-            return .showFailureShowInProgress
+        case .sessionNotStarted:
+            return .showFailureNotInitialized
         @unknown default:
             return nil
         }
