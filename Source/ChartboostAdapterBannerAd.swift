@@ -22,9 +22,19 @@ final class ChartboostAdapterBannerAd: ChartboostAdapterAd, PartnerBannerAd {
     private weak var viewController: UIViewController?
 
     override init(adapter: PartnerAdapter, request: PartnerAdLoadRequest, delegate: PartnerAdDelegate) throws {
-        // Fail if we cannot fit a fixed size banner in the requested size.
-        guard let requestedSize = request.bannerSize,
-              let loadedSize = BannerSize.largestStandardFixedSizeThatFits(in: requestedSize)?.size else {
+        guard let requestedSize = request.bannerSize else {
+            throw adapter.error(.loadFailureInvalidBannerSize)
+        }
+        let loadedSize: CGSize
+        // Half page is a fixed 300x600 unit the standard-fixed-size fitter does not recognize; serve it
+        // directly. Detect by dimensions (not BannerSize.halfPage) so this adapter stays compatible with
+        // all Mediation 5.x minors per the `~> 5.0` dependency rule.
+        if requestedSize.type == .fixed, requestedSize.size == CHBBannerSizeHalfPage {
+            loadedSize = CHBBannerSizeHalfPage
+        } else if let fittedSize = BannerSize.largestStandardFixedSizeThatFits(in: requestedSize)?.size {
+            // Fail if we cannot fit a fixed size banner in the requested size.
+            loadedSize = fittedSize
+        } else {
             throw adapter.error(.loadFailureInvalidBannerSize)
         }
         self.chartboostAd = CHBBanner(

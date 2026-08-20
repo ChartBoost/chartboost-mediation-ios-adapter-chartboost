@@ -11,6 +11,11 @@ All official releases can be found on this repository's [releases page](https://
 
 ## Mediation 5
 
+### 5.9.14.0.0
+- Forward LGPD consent to the Chartboost SDK, reported by the CMP under the new
+  `ChartboostAdapterConfiguration.lgpdConsentKey`.
+- This version of the adapter has been certified with ChartboostSDK 9.14.0.
+
 ### 5.9.13.0.0
 - This version of the adapter has been certified with ChartboostSDK 9.13.0.
 

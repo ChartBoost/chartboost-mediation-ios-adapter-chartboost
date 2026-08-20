@@ -36,8 +36,19 @@ final class ChartboostAdapter: PartnerAdapter {
             return
         }
 
-        // Apply initial consents
-        setConsents(configuration.consents, modifiedKeys: Set(configuration.consents.keys))
+        // Apply initial consents.
+        // The Chartboost SDK caches consents on disk and restores them at launch, so a value from
+        // an earlier session outlives the CMP that produced it. A CMP only reports the keys it has
+        // an opinion on, so the initial `modifiedKeys` synthesized here cannot say "this standard
+        // is no longer set", and a cached value would survive untouched. LGPD is forced in so that
+        // a withdrawn signal clears instead of the cached value being reported indefinitely.
+        //
+        // The other standards are deliberately left alone: forcing them would clear values that
+        // existing publisher and mediator integrations set directly. Monetization 10 removes the
+        // caching, at which point none of this is needed.
+        var initialModifiedKeys = Set(configuration.consents.keys)
+        initialModifiedKeys.insert(ChartboostAdapterConfiguration.lgpdConsentKey)
+        setConsents(configuration.consents, modifiedKeys: initialModifiedKeys)
         setIsUserUnderage(configuration.isUserUnderage)
 
         // Start Chartboost
@@ -130,6 +141,22 @@ final class ChartboostAdapter: PartnerAdapter {
             default:
                 Chartboost.clearDataUseConsent(for: .CCPA)
                 log(.privacyUpdated(setting: CHBPrivacyStandard.CCPA.rawValue, value: nil))
+            }
+        }
+
+        // Set LGPD consent.
+        // The Chartboost API takes a plain Bool (allowBehavioralTargeting) instead of the
+        // granted/denied convention used above, so the value is carried as "true"/"false".
+        // Anything else, and an absent key, mean the CMP is reporting no LGPD signal.
+        let lgpdConsentKey = ChartboostAdapterConfiguration.lgpdConsentKey
+        if modifiedKeys.contains(lgpdConsentKey) {
+            if let allowBehavioralTargeting = consents[lgpdConsentKey].flatMap(Bool.init) {
+                let consent = CHBDataUseConsent.LGPD(allowBehavioralTargeting: allowBehavioralTargeting)
+                Chartboost.addDataUseConsent(consent)
+                log(.privacyUpdated(setting: consent.privacyStandard.rawValue, value: consent.allowBehavioralTargeting))
+            } else {
+                Chartboost.clearDataUseConsent(for: .LGPD)
+                log(.privacyUpdated(setting: CHBPrivacyStandard.LGPD.rawValue, value: nil))
             }
         }
     }
